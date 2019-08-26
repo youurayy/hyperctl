@@ -5,7 +5,7 @@
 - [Windows / Hyper-V](#windows--hyper-v)
 
 ## Supported scenarios
-- Actual, multi-node Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
+- Actual, multi-node (or single-node) Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
 - Lightweight Kubernetes in Docker with Talos
 
