@@ -9,11 +9,13 @@
 - Docker on Desktop without Docker for Desktop
 - Lightweight Kubernetes in Docker with Talos
 
-## Limitations
-- TODO
-
 ## Advantages
 - TODO
+- simplicity
+
+## Limitations
+- TODO
+- no cifs events/osx share; hyperkit time sync;
 
 ## Changelog
 - Current state: pre-release; do not use yet;
@@ -177,16 +179,23 @@ rm -rf ./tmp/node1/
 sudo killall -9 hyperkit
 rm -rf ./tmp
 
-#
+# exports the cloud-init yaml into ./$distro.yaml for review
 ./hyperctl.sh iso
 
-#
+# installs and configures sleepwatcher to call this script to update the
+# VMs clocks after your Mac wakes up from sleep
 ./hyperctl.sh timesync
 
-#
+# installs local docker cli (docker.exe) and helps you configure it to connect
+# to the docker running on the master node
 ./hyperctl.sh docker
 
-#
+# walks you through a file sharing setup between local machine and the master node,
+# so that you can work with docker volumes.
+# this is semi-interactive so that your password is never stored anywhere insecurely.
+# this also means that you have to repeat this if you restart the master node.
+# alternatively, you can add the mount into master's fstab with a password= option.
+# note: the SMB file sharing does not support filesystem inotify events.
 ./hyperctl.sh share
 
 ```
