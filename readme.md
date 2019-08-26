@@ -25,13 +25,13 @@
 
 # download the script
 cd workdir
-curl https://raw.githubusercontent.com/youurayy/k8s-hyperkit/master/hyperkit.sh -O
-chmod +x hyperkit.sh
+curl https://raw.githubusercontent.com/youurayy/hyperctl/master/hyperctl.sh -O
+chmod +x hyperctl.sh
 
 # display short synopsis for the available commands
-./hyperkit.sh help
+./hyperctl.sh help
 '
-  Usage: ./hyperkit.sh command+
+  Usage: ./hyperctl.sh command+
 
   Commands:
 
@@ -61,10 +61,10 @@ chmod +x hyperkit.sh
 # performs `brew install hyperkit qemu kubernetes-cli kubernetes-helm`.
 # (qemu is necessary for `qemu-img`)
 # you may perform these manually / selectively instead.
-./hyperkit.sh install
+./hyperctl.sh install
 
 # display configured variables (edit the script to change them)
-./hyperkit.sh config
+./hyperctl.sh config
 '
     CONFIG: bionic
     DISTRO: ubuntu
@@ -83,33 +83,33 @@ chmod +x hyperkit.sh
 '
 
 # print external configs that this script can change
-./hyperkit.sh print
+./hyperctl.sh print
 
 # cleans or creates /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist
 # and sets the CIDR configured in the script.
 # if other apps already use the vmnet framework, then you don't want to change it, in
 # which case don't run this command, but instead set the CIDR inside this script
 # to the value from the vmnet.plist (as shown by the 'print' command).
-./hyperkit.sh net
+./hyperctl.sh net
 
 # appends IPs and MACs from the NODES config to the /var/db/dhcpd_leases.
 # this is necessary to have predictable IPs.
 # (MACs are generated from UUIDs by the vmnet framework.)
-./hyperkit.sh dhcp
+./hyperctl.sh dhcp
 
 # appends IP/hostname pairs from the NODES config to the /etc/hosts.
 # (the same hosts entries will also be installed into every node)
-./hyperkit.sh hosts
+./hyperctl.sh hosts
 
 # download, prepare and cache the VM image templates
-./hyperkit.sh image
+./hyperctl.sh image
 
 # create/launch the nodes
-./hyperkit.sh master
-./hyperkit.sh node1
-./hyperkit.sh nodeN...
+./hyperctl.sh master
+./hyperctl.sh node1
+./hyperctl.sh nodeN...
 # ---- or -----
-./hyperkit.sh master node1 node2 nodeN...
+./hyperctl.sh master node1 node2 nodeN...
 
 # ssh to the nodes if necessary (e.g. for manual k8s init)
 # by default, your `.ssh/id_rsa.pub` key was copied into the VMs' ~/.ssh/authorized_keys
@@ -120,7 +120,7 @@ ssh node2
 ...
 
 # performs automated k8s init (will wait for VMs to finish init first)
-./hyperkit.sh init
+./hyperctl.sh init
 
 # after init, you can do e.g.:
 hyperctl get pods --all-namespaces
@@ -141,10 +141,10 @@ kube-system   kube-scheduler-master            1/1     Running   1          4m38
 '
 
 # reboot the nodes
-./hyperkit.sh reboot
+./hyperctl.sh reboot
 
 # show info about existing VMs (size, run state)
-./hyperkit.sh info
+./hyperctl.sh info
 '
 NAME    PID    %CPU  %MEM  RSS   STARTED  TIME     DISK  SPARSE  STATUS
 master  36399  0.4   2.1   341M  3:51AM   0:26.30  40G   3.1G    RUNNING
@@ -153,19 +153,19 @@ node2   37799  0.4   2.0   333M  3:56AM   0:16.78  40G   3.1G    RUNNING
 '
 
 # shutdown all nodes thru ssh
-.\hyperv.ps1 shutdown
+./hyperctl.sh shutdown
 
 # start all nodes
-.\hyperv.ps1 start
+./hyperctl.sh start
 
 # stop all nodes
-./hyperkit.sh stop
+./hyperctl.sh stop
 
 # force-stop all nodes
-./hyperkit.sh kill
+./hyperctl.sh kill
 
 # delete all nodes' data (will not delete image templates)
-./hyperkit.sh delete
+./hyperctl.sh delete
 
 # kill only a particular node
 sudo kill -TERM 36418
@@ -176,6 +176,18 @@ rm -rf ./tmp/node1/
 # remove everything
 sudo killall -9 hyperkit
 rm -rf ./tmp
+
+#
+./hyperctl.sh iso
+
+#
+./hyperctl.sh timesync
+
+#
+./hyperctl.sh docker
+
+#
+./hyperctl.sh share
 
 ```
 
@@ -188,14 +200,14 @@ rm -rf ./tmp
 cd $HOME\your-workdir
 
 # download the script
-curl https://raw.githubusercontent.com/youurayy/k8s-hyperv/master/hyperv.ps1 -outfile hyperv.ps1
+curl https://raw.githubusercontent.com/youurayy/hyperctl/master/hyperctl.ps1 -outfile hyperctl.ps1
 # enable script run permission
 set-executionpolicy remotesigned
 
 # display short synopsis for the available commands
-.\hyperv.ps1 help
+.\hyperctl.ps1 help
 '
-  Usage: .\hyperv.ps1 command+
+  Usage: .\hyperctl.ps1 command+
 
   Commands:
 
@@ -223,10 +235,10 @@ set-executionpolicy remotesigned
 # you may instead perform these manually / selectively instead.
 # note: 7zip is needed to extract .xz archives
 # note: qemu-img is needed convert images to vhdx
-.\hyperv.ps1 install
+.\hyperctl.ps1 install
 
 # display configured variables (edit the script to change them)
-.\hyperv.ps1 config
+.\hyperctl.ps1 config
 '
     config: bionic
     distro: ubuntu
@@ -248,24 +260,24 @@ set-executionpolicy remotesigned
 '
 
 # print relevant configuration - etc/hosts, mac addresses, network interfaces
-.\hyperv.ps1 print
+.\hyperctl.ps1 print
 
 # create a private network for the VMs, as set by the `cidr` variable
-.\hyperv.ps1 net
+.\hyperctl.ps1 net
 
 # appends IP/hostname pairs to the /etc/hosts.
 # (the same hosts entries will also be installed into every node)
-.\hyperv.ps1 hosts
+.\hyperctl.ps1 hosts
 
 # download, prepare and cache the VM image templates
-.\hyperv.ps1 image
+.\hyperctl.ps1 image
 
 # create/launch the nodes
-.\hyperv.ps1 master
-.\hyperv.ps1 node1
-.\hyperv.ps1 nodeN...
+.\hyperctl.ps1 master
+.\hyperctl.ps1 node1
+.\hyperctl.ps1 nodeN...
 # ---- or -----
-.\hyperv.ps1 master node1 node2 nodeN...
+.\hyperctl.ps1 master node1 node2 nodeN...
 
 # ssh to the nodes if necessary (e.g. for manual k8s init)
 # by default, your `.ssh/id_rsa.pub` key was copied into the VMs' ~/.ssh/authorized_keys
@@ -277,7 +289,7 @@ ssh node2
 
 # perform automated k8s init (will wait for VMs to finish init first)
 # (this will checkpoint the nodes just before `kubeadm init`)
-.\hyperv.ps1 init
+.\hyperctl.ps1 init
 
 # after init, you can do e.g.:
 hyperctl get pods --all-namespaces
@@ -298,10 +310,10 @@ kube-system   kube-scheduler-master            1/1     Running   1          4m38
 '
 
 # reboot the nodes
-.\hyperv.ps1 reboot
+.\hyperctl.ps1 reboot
 
 # show info about existing VMs (size, run state)
-.\hyperv.ps1 info
+.\hyperctl.ps1 info
 '
 Name   State   CPUUsage(%) MemoryAssigned(M) Uptime           Status             Version
 ----   -----   ----------- ----------------- ------           ------             -------
@@ -311,25 +323,25 @@ node2  Running 2           4096              00:02:20.1000000 Operating normally
 '
 
 # checkpoint the VMs
-.\hyperv.ps1 save
+.\hyperctl.ps1 save
 
 # restore the VMs from the lastest snapshot
-.\hyperv.ps1 restore
+.\hyperctl.ps1 restore
 
 # shutdown all nodes thru ssh
-.\hyperv.ps1 shutdown
+.\hyperctl.ps1 shutdown
 
 # start all nodes
-.\hyperv.ps1 start
+.\hyperctl.ps1 start
 
 # stop all nodes thru hyper-v
-.\hyperv.ps1 stop
+.\hyperctl.ps1 stop
 
 # delete all nodes' data (will not delete image templates)
-.\hyperv.ps1 delete
+.\hyperctl.ps1 delete
 
 # delete the network
-.\hyperv.ps1 delnet
+.\hyperctl.ps1 delnet
 
 # NOTE if Hyper-V stops working after a Windows update, do:
 # Windows Security -> App & Browser control -> Exploit protection settings -> Program settings ->

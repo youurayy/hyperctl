@@ -576,7 +576,7 @@ function wait-for-node-init($opts, $name) {
 }
 
 function hyperctl() {
-  kubectl --kubeconfig=$HOME/.kube/config.hyperv $args
+  kubectl --kubeconfig=$HOME/.kube/config.hyperctl $args
 }
 
 echo ''
@@ -734,10 +734,10 @@ switch -regex ($args) {
       }
 
     new-item -itemtype directory -force -path $HOME\.kube | out-null
-    scp $sshopts master:.kube/config $HOME\.kube\config.hyperv
+    scp $sshopts master:.kube/config $HOME\.kube\config.hyperctl
 
-    $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperv $args }'
-    $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperv'"
+    $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl $args }'
+    $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperctl'"
 
     echo "hyperctl get pods --all-namespaces`n"
     hyperctl get pods --all-namespaces
@@ -815,7 +815,7 @@ switch -regex ($args) {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr
   }
   default {
-    echo 'invalid command; try: ./hyperv.ps1 help'
+    echo 'invalid command; try: ./hyperctl.ps1 help'
   }
 }
 

@@ -500,7 +500,7 @@ cat << EOF
   Practice real Kubernetes configurations on a local multi-node cluster.
   Inspect and optionally customize this script before use.
 
-  Usage: ./hyperkit.sh command+
+  Usage: ./hyperctl.sh command+
 
   Commands:
 
@@ -626,10 +626,10 @@ for arg in "$@"; do
       done
 
       mkdir -p ~/.kube
-      scp $SSHOPTS master:.kube/config ~/.kube/config.hyperkit
+      scp $SSHOPTS master:.kube/config ~/.kube/config.hyperctl
 
-      hyperalias="kubectl --kubeconfig ~/.kube/config.hyperkit"
-      hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperkit"
+      hyperalias="kubectl --kubeconfig ~/.kube/config.hyperctl"
+      hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
 
       echo ""
 
@@ -672,7 +672,7 @@ for arg in "$@"; do
     timesync)
       brew install sleepwatcher
       brew services start sleepwatcher
-      echo "$BASEDIR/hyperkit.sh hwclock" >> ~/.wakeup
+      echo "$BASEDIR/hyperctl.sh hwclock" >> ~/.wakeup
       chmod +x ~/.wakeup
       echo "time sync added to ~/.wakeup"
       echo ""
@@ -742,7 +742,7 @@ for arg in "$@"; do
       help
     ;;
     *)
-      echo "unknown argument: $arg (try 'help')"
+      echo "unknown command: $arg; try ./hyperctl.sh help"
     ;;
   esac
 done
