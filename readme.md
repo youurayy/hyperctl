@@ -5,7 +5,7 @@
 - [Windows / Hyper-V](#windows--hyper-v)
 
 ## Supported scenarios
-- Actual, multi-node Kuberenetes on CentOS/Ubuntu in Hyper-V/Hyperkit
+- Actual, multi-node Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
 - Lightweight Kubernetes in Docker with Talos
 
@@ -16,7 +16,7 @@
 - TODO
 
 ## Changelog
-- Current state: pre-release; TODO: k8s helm setup
+- Current state: pre-release; do not use yet;
 
 # Mac / Hyperkit
 ```bash

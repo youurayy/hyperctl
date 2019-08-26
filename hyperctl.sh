@@ -491,7 +491,7 @@ exec-on-all-nodes() {
   allnodes=( $(get-all-nodes) )
   for node in ${allnodes[@]}; do
     echo ---------------------$node
-    ssh $SSHOPTS $node $1
+    ssh $SSHOPTS $GUESTUSER@$node $1
   done
 }
 
@@ -597,7 +597,7 @@ for arg in "$@"; do
       workernodes=( $(get-worker-nodes) )
 
       for node in ${allnodes[@]}; do
-        while ! ssh $SSHOPTS $node 'ls ~/.init-completed > /dev/null 2>&1'; do
+        while ! ssh $SSHOPTS $GUESTUSER@$node 'ls ~/.init-completed > /dev/null 2>&1'; do
           echo "waiting for $node to init..."
           sleep 5
         done
@@ -613,20 +613,20 @@ for arg in "$@"; do
 
       echo "executing on master: $init"
 
-      if ! ssh $SSHOPTS master $init; then
+      if ! ssh $SSHOPTS $GUESTUSER@master $init; then
         echo "master init has failed, aborting"
         exit 1
       fi
 
-      joincmd=$(ssh $SSHOPTS master 'sudo kubeadm token create --print-join-command')
+      joincmd=$(ssh $SSHOPTS $GUESTUSER@master 'sudo kubeadm token create --print-join-command')
 
       for node in ${workernodes[@]}; do
         echo "executing on $node: $joincmd"
-        ssh $SSHOPTS $node "sudo $joincmd < /dev/null"
+        ssh $SSHOPTS $GUESTUSER@$node "sudo $joincmd < /dev/null"
       done
 
       mkdir -p ~/.kube
-      scp $SSHOPTS master:.kube/config ~/.kube/config.hyperctl
+      scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl
 
       hyperalias="kubectl --kubeconfig ~/.kube/config.hyperctl"
       hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
@@ -696,7 +696,7 @@ for arg in "$@"; do
       echo ""
       echo "exec to use docker on master:"
       echo ""
-      echo "echo 'export DOCKER_HOST=ssh://master' >> ~/.profile && . ~/.profile"
+      echo "echo 'export DOCKER_HOST=ssh://$GUESTUSER@master' >> ~/.profile && . ~/.profile"
     ;;
     share)
       echo "1. make sure File Sharing is enabled on your Mac:"

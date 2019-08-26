@@ -568,7 +568,7 @@ function got-ctrlc() {
 }
 
 function wait-for-node-init($opts, $name) {
-  while ( ! $(ssh $opts master 'ls ~/.init-completed 2> /dev/null') ) {
+  while ( ! $(ssh $opts $guestuser@master 'ls ~/.init-completed 2> /dev/null') ) {
     echo "waiting for $name to init..."
     start-sleep -seconds 5
     if( got-ctrlc ) { exit 1 }
@@ -715,26 +715,26 @@ switch -regex ($args) {
 
     echo "executing on master: $init"
 
-    if ( ! (ssh $sshopts master $init)) {
+    if ( ! (ssh $sshopts $guestuser@master $init)) {
       echo "master init has failed, aborting"
       exit 1
     }
 
-    $joincmd = $(ssh $sshopts master 'sudo kubeadm token create --print-join-command')
+    $joincmd = $(ssh $sshopts $guestuser@master 'sudo kubeadm token create --print-join-command')
 
     get-our-vms | where { $_.name -match "node.+" } |
       %{
         $node = $_.name
         echo "executing on $node`: $joincmd"
 
-        if ( ! (ssh $sshopts $node sudo $joincmd)) {
+        if ( ! (ssh $sshopts $guestuser@$node sudo $joincmd)) {
           echo "$node init has failed, aborting"
           exit 1
         }
       }
 
     new-item -itemtype directory -force -path $HOME\.kube | out-null
-    scp $sshopts master:.kube/config $HOME\.kube\config.hyperctl
+    scp $sshopts $guestuser@master:.kube/config $HOME\.kube\config.hyperctl
 
     $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl $args }'
     $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperctl'"
@@ -754,10 +754,10 @@ switch -regex ($args) {
     echo ""
   }
   ^reboot$ {
-    get-our-vms | %{ $(ssh $sshopts $_.name 'sudo reboot') }
+    get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo reboot') }
   }
   ^shutdown$ {
-    get-our-vms | %{ $(ssh $sshopts $_.name 'sudo shutdown -h now') }
+    get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo shutdown -h now') }
   }
   ^save$ {
     get-our-vms | checkpoint-vm
@@ -786,15 +786,15 @@ switch -regex ($args) {
     get-our-vms | %{
       $node = $_.name
       echo ---------------------$node
-      # ssh $sshopts $node "date ; if which chronyc > /dev/null; then sudo chronyc makestep ; date; fi"
-      ssh $sshopts $node "date"
+      # ssh $sshopts $guestuser@$node "date ; if which chronyc > /dev/null; then sudo chronyc makestep ; date; fi"
+      ssh $sshopts $guestuser@$node "date"
     }
   }
   ^track$ {
     get-our-vms | %{
       $node = $_.name
       echo ---------------------$node
-      ssh $sshopts $node "date ; sudo chronyc tracking"
+      ssh $sshopts $guestuser@$node "date ; sudo chronyc tracking"
     }
   }
   ^docker$ {
@@ -805,10 +805,10 @@ switch -regex ($args) {
     }
     echo ""
     echo "powershell:"
-    echo "  write-output '`$env:DOCKER_HOST = `"ssh://master`"' | out-file -encoding utf8 -append `$profile"
+    echo "  write-output '`$env:DOCKER_HOST = `"ssh://$guestuser@master`"' | out-file -encoding utf8 -append `$profile"
     echo ""
     echo "bash:"
-    echo "  write-output `"``nexport DOCKER_HOST='ssh://master'``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
+    echo "  write-output `"``nexport DOCKER_HOST='ssh://$guestuser@master'``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
     echo ""
   }
   ^iso$ {
