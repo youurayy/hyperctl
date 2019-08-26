@@ -1,0 +1,4 @@
+/tmp
+/.distro
+/*.yaml
+.DS_Store
