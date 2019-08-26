@@ -1,5 +1,9 @@
 # Kubernetes and Docker on Mac and Windows
 
+## Quick jump
+- [Mac / Hyperkit](#mac--hyperkit)
+- [Windows / Hyper-V](#windows--hyper-v)
+
 ## Supported scenarios
 - Actual, multi-node Kuberenetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
