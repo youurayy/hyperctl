@@ -5,9 +5,9 @@
 - [Windows / Hyper-V](#windows--hyper-v)
 
 ## Supported scenarios
-- Actual, multi-node (or single-node) Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
+- Multi-node (or single-node) Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
-- Lightweight Kubernetes in Docker with Talos
+- Lightweight Kubernetes in Docker with [Talos](https://github.com/talos-systems/talos)
 
 ## Advantages
 - TODO
@@ -22,6 +22,8 @@
 
 # Mac / Hyperkit
 ```bash
+
+# tested on Hyperkit 0.20190802 on macOS 10.14.5 w/ APFS, guest images Centos 1907 and Ubuntu 18.04
 
 # note: `sudo` is necessary for access to macOS Hypervisor and vmnet frameworks, and /etc/hosts config
 
@@ -66,19 +68,20 @@ chmod +x hyperctl.sh
 ./hyperctl.sh install
 
 # display configured variables (edit the script to change them)
+# note: to quickly change distro, do `echo bionic >> .distro`
 ./hyperctl.sh config
 '
-    CONFIG: bionic
-    DISTRO: ubuntu
-    WORKDIR: ./tmp
- GUESTUSER: name
-   SSHPATH: /Users/name/.ssh/id_rsa.pub
-  IMAGEURL: https://cloud-images.ubuntu.com/releases/server/19.04/release/ubuntu-19.04-server-cloudimg-amd64.vmdk
-  DISKFILE: ubuntu-19.04-server-cloudimg-amd64.raw
+    CONFIG: centos
+    DISTRO: centos
+   WORKDIR: ./tmp
+ GUESTUSER: user
+   SSHPATH: /Users/user/.ssh/id_rsa.pub
+  IMAGEURL: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1907.raw.tar.gz
+  DISKFILE: CentOS-7-x86_64-GenericCloud-1907.raw
       CIDR: 10.10.0.0/24
       CPUS: 4
        RAM: 4GB
-       HDD: 40GB
+       HDD: 40G
        CNI: flannel
     CNINET: 10.244.0.0/16
    CNIYAML: https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
@@ -203,7 +206,9 @@ rm -rf ./tmp
 # Windows / Hyper-V
 ```powershell
 
-# note: admin access is necessary for access to Windows Hyper-V framework, and etc/hosts config
+# tested with PowerShell 5.1 on Windows 10 Pro 1903, guest images Centos 1907 and Ubuntu 18.04
+
+# note: admin access is necessary for access to Windows Hyper-V framework and etc/hosts config
 
 # open PowerShell (Admin) prompt
 cd $HOME\your-workdir
@@ -247,13 +252,14 @@ set-executionpolicy remotesigned
 .\hyperctl.ps1 install
 
 # display configured variables (edit the script to change them)
+# note: to quickly change distro, do e.g. `echo centos >> .distro`
 .\hyperctl.ps1 config
 '
     config: bionic
     distro: ubuntu
    workdir: .\tmp
- guestuser: name
-   sshpath: C:\Users\name\.ssh\id_rsa.pub
+ guestuser: user
+   sshpath: C:\Users\user\.ssh\id_rsa.pub
   imageurl: https://cloud-images.ubuntu.com/releases/server/18.04/release/ubuntu-18.04-server-cloudimg-amd64.img
   vhdxtmpl: .\tmp\ubuntu-18.04-server-cloudimg-amd64.vhdx
       cidr: 10.10.0.0/24
@@ -354,7 +360,8 @@ node2  Running 2           4096              00:02:20.1000000 Operating normally
 
 # NOTE if Hyper-V stops working after a Windows update, do:
 # Windows Security -> App & Browser control -> Exploit protection settings -> Program settings ->
-# C:\WINDOWS\System32\vmcompute.exe -> Edit-> Code flow guard (CFG) -> uncheck Override system settings -> # net stop vmcompute -> net start vmcompute
+# C:\WINDOWS\System32\vmcompute.exe -> Edit-> Code flow guard (CFG) ->
+# uncheck Override system settings -> # net stop vmcompute -> net start vmcompute
 
 ```
 

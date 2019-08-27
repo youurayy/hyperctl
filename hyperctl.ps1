@@ -613,6 +613,9 @@ switch -regex ($args) {
        start - start the VMs
       delete - stop VMs and delete the VM files
       delnet - delete the network
+         iso - write cloud config data into a local yaml
+      docker - setup local docker with the master node
+       share - setup local fs sharing with docker on master
 
   For more info, see: https://github.com/youurayy/hyperctl
 "@
@@ -810,6 +813,9 @@ switch -regex ($args) {
     echo "bash:"
     echo "  write-output `"``nexport DOCKER_HOST='ssh://$guestuser@master'``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
     echo ""
+  }
+  ^share$ {
+
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr

@@ -631,14 +631,21 @@ for arg in "$@"; do
       hyperalias="kubectl --kubeconfig ~/.kube/config.hyperctl"
       hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
 
-      echo ""
+      cachedir="$HOME/.kube/cache/discovery/$CIDR.10_6443/"
+      if [ -a $cachedir ]; then
+        echo
+        echo "deleting previous $cachedir"
+        echo
+        rm -rf $cachedir
+      fi
 
+      echo
       $hyperctl get pods --all-namespaces
       $hyperctl get nodes
 
-      echo ""
+      echo
       echo "to setup bash alias, exec:"
-      echo ""
+      echo
       echo "echo \"alias hyperctl='$hyperalias'\" >> ~/.profile"
       echo "source ~/.profile"
     ;;
@@ -675,7 +682,7 @@ for arg in "$@"; do
       echo "$BASEDIR/hyperctl.sh hwclock" >> ~/.wakeup
       chmod +x ~/.wakeup
       echo "time sync added to ~/.wakeup"
-      echo ""
+      echo
       cat ~/.wakeup
     ;;
     hwclock)
@@ -692,11 +699,13 @@ for arg in "$@"; do
       if ! which docker > /dev/null; then
         echo "installing docker cli..."
         curl -L $DOCKERCLI | tar zxvf - --strip 1 -C /usr/local/bin docker/docker
+        echo
       fi
-      echo ""
-      echo "exec to use docker on master:"
-      echo ""
-      echo "echo 'export DOCKER_HOST=ssh://$GUESTUSER@master' >> ~/.profile && . ~/.profile"
+      cmd="echo 'export DOCKER_HOST=ssh://$GUESTUSER@master' >> ~/.profile && . ~/.profile"
+      echo $cmd | pbcopy
+      echo "exec to use docker on master (copied to clipboard):"
+      echo
+      echo $cmd
     ;;
     share)
       echo "1. make sure File Sharing is enabled on your Mac:"
@@ -708,7 +717,7 @@ for arg in "$@"; do
       echo
 
       if sharing -l | grep docker > /dev/null; then
-        echo "2. not setting up host $HOME -> /docker share, already present..."
+        echo "2. (not setting up host $HOME -> /docker share, already present...)"
         echo
       else
         echo "2. setting up host $HOME -> /docker share..."
@@ -737,6 +746,7 @@ for arg in "$@"; do
     iso)
       go-to-scriptdir
       write-user-data "${DISTRO}.yaml"
+      echo "debug cloud-config was written to ./${DISTRO}.yaml"
     ;;
     help)
       help
