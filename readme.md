@@ -24,7 +24,6 @@
 ```bash
 
 # tested on Hyperkit 0.20190802 on macOS 10.14.5 w/ APFS, guest images Centos 1907 and Ubuntu 18.04
-
 # note: `sudo` is necessary for access to macOS Hypervisor and vmnet frameworks, and /etc/hosts config
 
 # download the script
@@ -207,7 +206,6 @@ rm -rf ./tmp
 ```powershell
 
 # tested with PowerShell 5.1 on Windows 10 Pro 1903, guest images Centos 1907 and Ubuntu 18.04
-
 # note: admin access is necessary for access to Windows Hyper-V framework and etc/hosts config
 
 # open PowerShell (Admin) prompt
