@@ -59,6 +59,7 @@ chmod +x hyperctl.sh
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+       talos - setup talos k8s on docker
 '
 
 # performs `brew install hyperkit qemu kubernetes-cli kubernetes-helm`.
@@ -200,6 +201,9 @@ rm -rf ./tmp
 # note: the SMB file sharing does not support filesystem inotify events.
 ./hyperctl.sh share
 
+# TODO
+./hyperctl.sh talos
+
 ```
 
 # Windows / Hyper-V
@@ -241,6 +245,10 @@ set-executionpolicy remotesigned
        start - start the VMs
       delete - stop VMs and delete the VM files
       delnet - delete the network
+         iso - write cloud config data into a local yaml
+      docker - setup local docker with the master node
+       share - setup local fs sharing with docker on master
+       talos - setup talos k8s on docker
 '
 
 # performs `choco install 7zip.commandline qemu-img kubernetes-cli kubernetes-helm`.
@@ -355,6 +363,21 @@ node2  Running 2           4096              00:02:20.1000000 Operating normally
 
 # delete the network
 .\hyperctl.ps1 delnet
+
+# installs local docker cli (docker.exe) and helps you configure it to connect
+# to the docker running on the master node
+.\hyperctl.ps1 docker
+
+# walks you through a file sharing setup between local machine and the master node,
+# so that you can work with docker volumes.
+# this is semi-interactive so that your password is never stored anywhere insecurely.
+# this also means that you have to repeat this if you restart the master node.
+# alternatively, you can add the mount into master's fstab with a password= option.
+.\hyperctl.ps1 share
+
+# TODO
+.\hyperctl.ps1 talos
+
 
 # NOTE if Hyper-V stops working after a Windows update, do:
 # Windows Security -> App & Browser control -> Exploit protection settings -> Program settings ->

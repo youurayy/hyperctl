@@ -525,6 +525,7 @@ cat << EOF
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+       talos - setup talos k8s on docker
 
   For more info, see: https://github.com/youurayy/hyperctl
 EOF
@@ -742,6 +743,9 @@ for arg in "$@"; do
       echo $cmd | pbcopy
       echo "4. "$cmd
       echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
+    ;;
+    talos)
+
     ;;
     iso)
       go-to-scriptdir

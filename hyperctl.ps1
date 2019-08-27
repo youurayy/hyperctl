@@ -618,6 +618,7 @@ switch -regex ($args) {
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+       talos - setup talos k8s on docker
 
   For more info, see: https://github.com/youurayy/hyperctl
 "@
@@ -821,6 +822,9 @@ switch -regex ($args) {
     echo "(restart your shell after applying the above)"
   }
   ^share$ {
+
+  }
+  ^talos$ {
 
   }
   ^iso$ {
