@@ -235,6 +235,7 @@ yum_repos:
 packages:
   - hyperv-daemons
   - yum-utils
+  - cifs-utils
   - device-mapper-persistent-data
   - lvm2
   - docker-ce
@@ -311,6 +312,7 @@ package_upgrade: true
 packages:
   - linux-tools-virtual
   - linux-cloud-tools-virtual
+  - cifs-utils
   - chrony
   - docker-ce
   - docker-ce-cli
@@ -755,6 +757,8 @@ switch -regex ($args) {
     echo "bash alias:"
     echo "  write-output `"``n$($bashalias.replace('\', '\\'))``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
     echo ""
+    echo ""
+    echo "(restart your shell after applying the above)"
   }
   ^reboot$ {
     get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo reboot') }
@@ -813,6 +817,8 @@ switch -regex ($args) {
     echo "bash:"
     echo "  write-output `"``nexport DOCKER_HOST='ssh://$guestuser@master'``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
     echo ""
+    echo ""
+    echo "(restart your shell after applying the above)"
   }
   ^share$ {
 
