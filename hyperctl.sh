@@ -717,20 +717,20 @@ for arg in "$@"; do
       echo "         -> Windows File Sharing: [x] Your Account"
       echo
 
-      if sharing -l | grep docker > /dev/null; then
-        echo "2. (not setting up host $HOME -> /docker share, already present...)"
+      if sharing -l | grep hyperctl > /dev/null; then
+        echo "2. (not setting up host $HOME -> /hyperctl share, already present...)"
         echo
       else
-        echo "2. setting up host $HOME -> /docker share..."
+        echo "2. setting up host $HOME -> /hyperctl share..."
         echo
-        cmd="sudo sharing -a $HOME -s 001 -g 000 -n docker"
+        cmd="sudo sharing -a $HOME -s 001 -g 000 -n hyperctl"
         echo $cmd
         echo
         $cmd
         echo
       fi
 
-      cmd="sudo mkdir -p $HOME && sudo mount -t cifs //$CIDR.1/docker $HOME -o sec=ntlm,username=$GUESTUSER,vers=3.0,sec=ntlmv2,noperm"
+      cmd="sudo mkdir -p $HOME && sudo mount -t cifs //$CIDR.1/hyperctl $HOME -o sec=ntlm,username=$GUESTUSER,vers=3.0,sec=ntlmv2,noperm"
       echo $cmd | pbcopy
       echo "3. "$cmd
       echo "  ^ copied to the clipboard, paste & execute on master:"

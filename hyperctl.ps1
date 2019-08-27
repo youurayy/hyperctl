@@ -577,6 +577,11 @@ function wait-for-node-init($opts, $name) {
   }
 }
 
+function to-unc-path($path) {
+  $item = get-item $path
+  return $path.replace($item.root, '/').replace('\', '/')
+}
+
 function hyperctl() {
   kubectl --kubeconfig=$HOME/.kube/config.hyperctl $args
 }
@@ -822,7 +827,30 @@ switch -regex ($args) {
     echo "(restart your shell after applying the above)"
   }
   ^share$ {
+    if (!( get-smbshare -name 'hyperctl' -ea silentlycontinue )) {
+      echo "creating host $HOME -> /hyperctl share..."
+      new-smbshare -name 'hyperctl' -path $HOME
+    }
+    else {
+      echo "(not creating $HOME -> /hyperctl share, already present...)"
+    }
+    echo ""
 
+    $unc = to-unc-path -path $HOME
+    $cmd = "sudo mkdir -p $unc && sudo mount -t cifs //$CIDR.1/hyperctl $unc -o sec=ntlm,username=$GUESTUSER,vers=3.0,sec=ntlmv2,noperm"
+    set-clipboard -value $cmd
+    echo $cmd
+    echo "  ^ copied to the clipboard, paste & execute on master:"
+    echo "    (just right-click (to paste), <enter your Windows password>, Enter, Ctrl+D)"
+    echo ""
+    ssh $sshopts $guestuser@master
+
+    echo ""
+    $unc = to-unc-path -path $pwd.path
+    $cmd = "docker run -it -v $unc`:$unc r-base ls -l $unc"
+    set-clipboard -value $cmd
+    echo $cmd
+    echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
   }
   ^talos$ {
 
@@ -831,7 +859,7 @@ switch -regex ($args) {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr
   }
   default {
-    echo 'invalid command; try: ./hyperctl.ps1 help'
+    echo 'invalid command; try: .\hyperctl.ps1 help'
   }
 }
 
