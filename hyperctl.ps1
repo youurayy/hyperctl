@@ -214,9 +214,15 @@ write_files:
         echo 'waiting for talos cluster to init...'
         sleep 5
       done
-      kubectl apply -f $talosyaml/psp.yaml
+      while ! kubectl apply -f $talosyaml/psp.yaml 2> /dev/null; do
+        echo 'trying to apply k8s yaml configs...'
+        sleep 5
+      done
       kubectl apply -f $talosyaml/coredns.yaml
       kubectl apply -f $talosyaml/flannel.yaml
+      # echo "waiting 10 sec for cluster init"
+      # always
+      # docker update --restart=unless-stopped $(docker ps -q)
 "@
 }
 
@@ -580,7 +586,6 @@ function shasum256($shaurl, $diskitem, $item) {
       webhash: $webhash
 "@
   }
-
   return $hash
 }
 
@@ -611,9 +616,15 @@ function hyperctl() {
   kubectl --kubeconfig=$HOME/.kube/config.hyperctl $args
 }
 
-function install-kubeconfig() {
+function install-kubeconfig($newserver) {
   new-item -itemtype directory -force -path $HOME\.kube | out-null
   scp $sshopts $guestuser@master:.kube/config $HOME\.kube\config.hyperctl
+
+  if($newserver) {
+    (get-content $HOME\.kube\config.hyperctl -encoding ascii) `
+      -replace '(server: https://)(.+)$', "`$1$newserver" |
+    out-file $HOME\.kube\config.hyperctl -encoding ascii
+  }
 
   $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl $args }'
   $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperctl'"
@@ -785,7 +796,8 @@ switch -regex ($args) {
 
     echo "executing on master: $init"
 
-    if ( ! (ssh $sshopts $guestuser@master $init)) {
+    ssh $sshopts $guestuser@master $init
+    if (!$?) {
       echo "master init has failed, aborting"
       exit 1
     }
@@ -797,13 +809,14 @@ switch -regex ($args) {
         $node = $_.name
         echo "executing on $node`: $joincmd"
 
-        if ( ! (ssh $sshopts $guestuser@$node sudo $joincmd)) {
+        ssh $sshopts $guestuser@$node sudo $joincmd
+        if (!$?) {
           echo "$node init has failed, aborting"
           exit 1
         }
       }
 
-    install-kubeconfig
+    install-kubeconfig -newserver $null
   }
   ^reboot$ {
     get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo reboot') }
@@ -896,12 +909,14 @@ switch -regex ($args) {
     echo ""
     echo "installing talos on master..."
     echo ""
-    if ( ! (ssh $sshopts $guestuser@master "/tmp/install-talos.sh")) {
+    ssh $sshopts $guestuser@master "/tmp/install-talos.sh"
+    if (!$?) {
       echo "talos init has failed, aborting"
       exit 1
     }
     echo ""
-    install-kubeconfig
+    # add to /etc/hosts: 10.10.0.10 master-1
+    install-kubeconfig -newserver 'master-1:50000'
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr

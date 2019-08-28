@@ -177,12 +177,12 @@ write_files:
         ]
       }
   - path: /tmp/install-talos.sh
-    permissions: '0755'
+    permissions: 0755
     content: |
       #!/bin/bash
       set -e
       if [ -a /home/$GUESTUSER/.kube/config ]; then
-        echo 'k8s already set up; abort'
+        echo "k8s already set up; abort"
         exit 1
       fi
       sudo curl -\# -L $TALOSURL --retry 3 -o /usr/local/bin/osctl
@@ -193,9 +193,15 @@ write_files:
         echo 'waiting for talos cluster to init...'
         sleep 5
       done
-      kubectl apply -f $TALOSYAML/psp.yaml
+      while ! kubectl apply -f $TALOSYAML/psp.yaml 2> /dev/null; do
+        echo 'trying to apply k8s yaml configs...'
+        sleep 5
+      done
       kubectl apply -f $TALOSYAML/coredns.yaml
-      kubectl apply -f $TALOSYAML/flannel.yaml"
+      kubectl apply -f $TALOSYAML/flannel.yaml
+      # echo 'waiting 10 sec for cluster init'
+      # always
+      # docker update --restart=unless-stopped $(docker ps -q)"
 
 USERDATA_centos="\
 $USERDATA_shared

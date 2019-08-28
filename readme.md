@@ -7,7 +7,7 @@
 ## Supported scenarios
 - Multi-node (or single-node) Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
-- Lightweight Kubernetes in Docker with [Talos](https://github.com/talos-systems/talos)
+- Kubernetes in Docker with [Talos](https://github.com/talos-systems/talos)
 
 ## Advantages
 - TODO
@@ -32,7 +32,7 @@ curl https://raw.githubusercontent.com/youurayy/hyperctl/master/hyperctl.sh -O
 chmod +x hyperctl.sh
 
 # display short synopsis for the available commands
-./hyperctl.sh help
+./hyperctl.sh
 '
   Usage: ./hyperctl.sh command+
 
@@ -227,7 +227,7 @@ curl https://raw.githubusercontent.com/youurayy/hyperctl/master/hyperctl.ps1 -ou
 set-executionpolicy remotesigned
 
 # display short synopsis for the available commands
-.\hyperctl.ps1 help
+.\hyperctl.ps1
 '
   Usage: .\hyperctl.ps1 command+
 
