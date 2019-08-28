@@ -854,6 +854,24 @@ switch -regex ($args) {
   }
   ^talos$ {
 
+$talosver='v0.2.0-alpha.6'
+
+sudo curl -\# -L "https://github.com/talos-systems/talos/releases/download/$talosver/osctl-linux-amd64" --retry 3 -o /usr/local/bin/osctl
+
+sudo chmod +x /usr/local/bin/osctl
+
+osctl cluster create --masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500 --name hyperctl
+
+mkdir -p ~/.kube
+
+osctl kubeconfig > ~/.kube/config
+
+kubectl apply -f https://raw.githubusercontent.com/talos-systems/talos/$talosver/hack/dev/manifests/psp.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/talos-systems/talos/$talosver/hack/dev/manifests/coredns.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/talos-systems/talos/$talosver/hack/dev/manifests/flannel.yaml
+
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr
