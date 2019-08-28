@@ -7,7 +7,6 @@
 ## Supported scenarios
 - Multi-node (or single-node) Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
-- Lightweight Kubernetes in Docker with [Talos](https://github.com/talos-systems/talos)
 
 ## Advantages
 - TODO
@@ -32,7 +31,7 @@ curl https://raw.githubusercontent.com/youurayy/hyperctl/master/hyperctl.sh -O
 chmod +x hyperctl.sh
 
 # display short synopsis for the available commands
-./hyperctl.sh help
+./hyperctl.sh
 '
   Usage: ./hyperctl.sh command+
 
@@ -59,7 +58,6 @@ chmod +x hyperctl.sh
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-       talos - setup talos k8s on docker
 '
 
 # performs `brew install hyperkit qemu kubernetes-cli kubernetes-helm`.
@@ -86,8 +84,6 @@ chmod +x hyperctl.sh
     CNINET: 10.244.0.0/16
    CNIYAML: https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
  DOCKERCLI: https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz
-  TALOSVER: v0.2.0-alpha.6
-     TALOS: --masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500
 '
 
 # print external configs that this script can change
@@ -207,9 +203,6 @@ rm -rf ./tmp
 TODO
 '
 
-# TODO
-./hyperctl.sh talos
-
 ```
 
 # Windows / Hyper-V
@@ -227,7 +220,7 @@ curl https://raw.githubusercontent.com/youurayy/hyperctl/master/hyperctl.ps1 -ou
 set-executionpolicy remotesigned
 
 # display short synopsis for the available commands
-.\hyperctl.ps1 help
+.\hyperctl.ps1
 '
   Usage: .\hyperctl.ps1 command+
 
@@ -254,7 +247,6 @@ set-executionpolicy remotesigned
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-       talos - setup talos k8s on docker
 '
 
 # performs `choco install 7zip.commandline qemu-img kubernetes-cli kubernetes-helm`.
@@ -285,8 +277,6 @@ set-executionpolicy remotesigned
     cninet: 10.244.0.0/16
    cniyaml: https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
  dockercli: https://github.com/StefanScherer/docker-cli-builder/releases/download/19.03.1/docker.exe
-  talosver: v0.2.0-alpha.6
-     talos: --masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500
 '
 
 # print relevant configuration - etc/hosts, mac addresses, network interfaces
@@ -383,10 +373,6 @@ node2  Running 2           4096              00:02:20.1000000 Operating normally
 # this also means that you have to repeat this if you restart the master node.
 # alternatively, you can add the mount into master's fstab with a password= option.
 .\hyperctl.ps1 share
-
-# TODO
-.\hyperctl.ps1 talos
-
 
 # NOTE if Hyper-V stops working after a Windows update, do:
 # Windows Security -> App & Browser control -> Exploit protection settings -> Program settings ->

@@ -113,11 +113,6 @@ SSHOPTS="-o LogLevel=ERROR -o StrictHostKeyChecking=false -o UserKnownHostsFile=
 
 DOCKERCLI="https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz"
 
-TALOSVER='v0.2.0-alpha.6'
-TALOS='--masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500'
-TALOSURL="https://github.com/talos-systems/talos/releases/download/$TALOSVER/osctl-linux-amd64"
-TALOSYAML="https://raw.githubusercontent.com/talos-systems/talos/$TALOSVER/hack/dev/manifests"
-
 # -------------------------CLOUD INIT-----------------------------------
 
 cloud-init() {
@@ -175,27 +170,7 @@ write_files:
         \"storage-opts\": [
           \"overlay2.override_kernel_check=true\"
         ]
-      }
-  - path: /tmp/install-talos.sh
-    permissions: '0755'
-    content: |
-      #!/bin/bash
-      set -e
-      if [ -a /home/$GUESTUSER/.kube/config ]; then
-        echo 'k8s already set up; abort'
-        exit 1
-      fi
-      sudo curl -\# -L $TALOSURL --retry 3 -o /usr/local/bin/osctl
-      sudo chmod +x /usr/local/bin/osctl
-      osctl cluster create --name talos $TALOS
-      mkdir -p /home/$GUESTUSER/.kube
-      while ! osctl kubeconfig > /home/$GUESTUSER/.kube/config 2> /dev/null; do
-        echo 'waiting for talos cluster to init...'
-        sleep 5
-      done
-      kubectl apply -f $TALOSYAML/psp.yaml
-      kubectl apply -f $TALOSYAML/coredns.yaml
-      kubectl apply -f $TALOSYAML/flannel.yaml"
+      }"
 
 USERDATA_centos="\
 $USERDATA_shared
@@ -584,7 +559,6 @@ cat << EOF
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-       talos - setup talos k8s on docker
 
   For more info, see: https://github.com/youurayy/hyperctl
 EOF
@@ -615,8 +589,6 @@ for arg in "$@"; do
       echo "    CNINET: $CNINET"
       echo "   CNIYAML: $CNIYAML"
       echo " DOCKERCLI: $DOCKERCLI"
-      echo "  TALOSVER: $TALOSVER"
-      echo "     TALOS: $TALOS"
     ;;
     print)
       sudo echo
@@ -780,18 +752,6 @@ for arg in "$@"; do
       echo $cmd | pbcopy
       echo "4. "$cmd
       echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
-    ;;
-    talos)
-      wait-for-node-init master
-      echo
-      echo "installing talos on master..."
-      echo
-      if ( ! (ssh $SSHOPTS $GUESTUSER@master "/tmp/install-talos.sh")) {
-        echo "talos init has failed, aborting"
-        exit 1
-      }
-      echo
-      install-kubeconfig
     ;;
     iso)
       go-to-scriptdir

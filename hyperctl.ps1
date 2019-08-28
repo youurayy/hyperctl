@@ -97,11 +97,6 @@ $sshopts = @('-o LogLevel=ERROR', '-o StrictHostKeyChecking=no', '-o UserKnownHo
 
 $dockercli = 'https://github.com/StefanScherer/docker-cli-builder/releases/download/19.03.1/docker.exe'
 
-$talosver='v0.2.0-alpha.6'
-$talos='--masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500'
-$talosurl="https://github.com/talos-systems/talos/releases/download/$talosver/osctl-linux-amd64"
-$talosyaml="https://raw.githubusercontent.com/talos-systems/talos/$talosver/hack/dev/manifests"
-
 # ----------------------------------------------------------------------
 
 $imageurl = "$imagebase/$image$archive"
@@ -197,26 +192,6 @@ write_files:
           "overlay2.override_kernel_check=true"
         ]
       }
-  - path: /tmp/install-talos.sh
-    permissions: 0755
-    content: |
-      #!/bin/bash
-      set -e
-      if [ -a /home/$guestuser/.kube/config ]; then
-        echo "k8s already set up; abort"
-        exit 1
-      fi
-      sudo curl -\# -L $talosurl --retry 3 -o /usr/local/bin/osctl
-      sudo chmod +x /usr/local/bin/osctl
-      osctl cluster create --name talos $talos
-      mkdir -p /home/$guestuser/.kube
-      while ! osctl kubeconfig > /home/$guestuser/.kube/config 2> /dev/null; do
-        echo 'waiting for talos cluster to init...'
-        sleep 5
-      done
-      kubectl apply -f $talosyaml/psp.yaml
-      kubectl apply -f $talosyaml/coredns.yaml
-      kubectl apply -f $talosyaml/flannel.yaml
 "@
 }
 
@@ -580,7 +555,6 @@ function shasum256($shaurl, $diskitem, $item) {
       webhash: $webhash
 "@
   }
-
   return $hash
 }
 
@@ -680,7 +654,6 @@ switch -regex ($args) {
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-       talos - setup talos k8s on docker
 
   For more info, see: https://github.com/youurayy/hyperctl
 "@
@@ -710,8 +683,6 @@ switch -regex ($args) {
     echo "    cninet: $cninet"
     echo "   cniyaml: $cniyaml"
     echo " dockercli: $dockercli"
-    echo "  talosver: $talosver"
-    echo "     talos: $talos"
   }
   ^print$ {
     echo "***** $etchosts *****"
@@ -785,7 +756,8 @@ switch -regex ($args) {
 
     echo "executing on master: $init"
 
-    if ( ! (ssh $sshopts $guestuser@master $init)) {
+    ssh $sshopts $guestuser@master $init
+    if (!$?) {
       echo "master init has failed, aborting"
       exit 1
     }
@@ -797,7 +769,8 @@ switch -regex ($args) {
         $node = $_.name
         echo "executing on $node`: $joincmd"
 
-        if ( ! (ssh $sshopts $guestuser@$node sudo $joincmd)) {
+        ssh $sshopts $guestuser@$node sudo $joincmd
+        if (!$?) {
           echo "$node init has failed, aborting"
           exit 1
         }
@@ -890,18 +863,6 @@ switch -regex ($args) {
     set-clipboard -value $cmd
     echo $cmd
     echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
-  }
-  ^talos$ {
-    wait-for-node-init -opts $sshopts master
-    echo ""
-    echo "installing talos on master..."
-    echo ""
-    if ( ! (ssh $sshopts $guestuser@master "/tmp/install-talos.sh")) {
-      echo "talos init has failed, aborting"
-      exit 1
-    }
-    echo ""
-    install-kubeconfig
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr
