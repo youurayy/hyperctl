@@ -199,9 +199,6 @@ rm -rf ./tmp
 # alternatively, you can add the mount into master's fstab with a password= option.
 # note: the SMB file sharing does not support filesystem inotify events.
 ./hyperctl.sh share
-'
-TODO
-'
 
 ```
 
