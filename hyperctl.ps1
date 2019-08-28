@@ -197,13 +197,23 @@ write_files:
           "overlay2.override_kernel_check=true"
         ]
       }
-  - path: /home/$guestuser/.talos.sh
+  - path: /tmp/install-talos.sh
+    permissions: 0755
     content: |
+      #!/bin/bash
+      set -e
+      if [ -a /home/$guestuser/.kube/config ]; then
+        echo "k8s already set up; abort"
+        exit 1
+      fi
       sudo curl -\# -L $talosurl --retry 3 -o /usr/local/bin/osctl
       sudo chmod +x /usr/local/bin/osctl
       osctl cluster create --name talos $talos
-      mkdir -p ~/.kube
-      osctl kubeconfig > ~/.kube/config
+      mkdir -p /home/$guestuser/.kube
+      while ! osctl kubeconfig > /home/$guestuser/.kube/config 2> /dev/null; do
+        echo 'waiting for talos cluster to init...'
+        sleep 5
+      done
       kubectl apply -f $talosyaml/psp.yaml
       kubectl apply -f $talosyaml/coredns.yaml
       kubectl apply -f $talosyaml/flannel.yaml
@@ -601,6 +611,38 @@ function hyperctl() {
   kubectl --kubeconfig=$HOME/.kube/config.hyperctl $args
 }
 
+function install-kubeconfig() {
+  new-item -itemtype directory -force -path $HOME\.kube | out-null
+  scp $sshopts $guestuser@master:.kube/config $HOME\.kube\config.hyperctl
+
+  $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl $args }'
+  $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperctl'"
+
+  $cachedir="$HOME\.kube\cache\discovery\$cidr.10_6443"
+  if (test-path $cachedir) {
+    echo ""
+    echo "deleting previous $cachedir"
+    echo ""
+    rmdir $cachedir -recurse
+  }
+
+  echo "hyperctl get pods --all-namespaces`n"
+  hyperctl get pods --all-namespaces
+  echo ""
+  echo "hyperctl get nodes`n"
+  hyperctl get nodes
+
+  echo ""
+  echo "powershell alias:"
+  echo "  write-output '$pwsalias' | out-file -encoding utf8 -append `$profile"
+  echo ""
+  echo "bash alias:"
+  echo "  write-output `"``n$($bashalias.replace('\', '\\'))``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
+  echo ""
+  echo ""
+  echo "(restart your shell after applying the above)"
+}
+
 echo ''
 
 if($args.count -eq 0) {
@@ -667,6 +709,9 @@ switch -regex ($args) {
     echo "       cni: $cni"
     echo "    cninet: $cninet"
     echo "   cniyaml: $cniyaml"
+    echo " dockercli: $dockercli"
+    echo "  talosver: $talosver"
+    echo "     talos: $talos"
   }
   ^print$ {
     echo "***** $etchosts *****"
@@ -726,7 +771,6 @@ switch -regex ($args) {
     get-our-vms
   }
   ^init$ {
-
     get-our-vms | %{ wait-for-node-init -opts $sshopts -name $_.name }
 
     echo "all nodes are pre-initialized, making VM snapshots before k8s init..."
@@ -759,27 +803,7 @@ switch -regex ($args) {
         }
       }
 
-    new-item -itemtype directory -force -path $HOME\.kube | out-null
-    scp $sshopts $guestuser@master:.kube/config $HOME\.kube\config.hyperctl
-
-    $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl $args }'
-    $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperctl'"
-
-    echo "hyperctl get pods --all-namespaces`n"
-    hyperctl get pods --all-namespaces
-    echo ""
-    echo "hyperctl get nodes`n"
-    hyperctl get nodes
-
-    echo ""
-    echo "powershell alias:"
-    echo "  write-output '$pwsalias' | out-file -encoding utf8 -append `$profile"
-    echo ""
-    echo "bash alias:"
-    echo "  write-output `"``n$($bashalias.replace('\', '\\'))``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
-    echo ""
-    echo ""
-    echo "(restart your shell after applying the above)"
+    install-kubeconfig
   }
   ^reboot$ {
     get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo reboot') }
@@ -868,10 +892,20 @@ switch -regex ($args) {
     echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
   }
   ^talos$ {
-    # copy kubeconfig to local
+    wait-for-node-init -opts $sshopts master
+    echo ""
+    echo "installing talos on master..."
+    echo ""
+    if ( ! (ssh $sshopts $guestuser@master "/tmp/install-talos.sh")) {
+      echo "talos init has failed, aborting"
+      exit 1
+    }
+    echo ""
+    install-kubeconfig
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr
+    echo "debug cloud-config was written to .\${distro}.yaml"
   }
   default {
     echo 'invalid command; try: .\hyperctl.ps1 help'

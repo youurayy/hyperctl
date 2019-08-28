@@ -85,6 +85,9 @@ chmod +x hyperctl.sh
        CNI: flannel
     CNINET: 10.244.0.0/16
    CNIYAML: https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+ DOCKERCLI: https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz
+  TALOSVER: v0.2.0-alpha.6
+     TALOS: --masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500
 '
 
 # print external configs that this script can change
@@ -200,6 +203,9 @@ rm -rf ./tmp
 # alternatively, you can add the mount into master's fstab with a password= option.
 # note: the SMB file sharing does not support filesystem inotify events.
 ./hyperctl.sh share
+'
+TODO
+'
 
 # TODO
 ./hyperctl.sh talos
@@ -278,6 +284,9 @@ set-executionpolicy remotesigned
        cni: flannel
     cninet: 10.244.0.0/16
    cniyaml: https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+ dockercli: https://github.com/StefanScherer/docker-cli-builder/releases/download/19.03.1/docker.exe
+  talosver: v0.2.0-alpha.6
+     talos: --masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500
 '
 
 # print relevant configuration - etc/hosts, mac addresses, network interfaces

@@ -113,6 +113,11 @@ SSHOPTS="-o LogLevel=ERROR -o StrictHostKeyChecking=false -o UserKnownHostsFile=
 
 DOCKERCLI="https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz"
 
+TALOSVER='v0.2.0-alpha.6'
+TALOS='--masters 1 --workers 2 --cpus 1.5 --memory 1024 --mtu 1500'
+TALOSURL="https://github.com/talos-systems/talos/releases/download/$TALOSVER/osctl-linux-amd64"
+TALOSYAML="https://raw.githubusercontent.com/talos-systems/talos/$TALOSVER/hack/dev/manifests"
+
 # -------------------------CLOUD INIT-----------------------------------
 
 cloud-init() {
@@ -170,7 +175,27 @@ write_files:
         \"storage-opts\": [
           \"overlay2.override_kernel_check=true\"
         ]
-      }"
+      }
+  - path: /tmp/install-talos.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -e
+      if [ -a /home/$GUESTUSER/.kube/config ]; then
+        echo 'k8s already set up; abort'
+        exit 1
+      fi
+      sudo curl -\# -L $TALOSURL --retry 3 -o /usr/local/bin/osctl
+      sudo chmod +x /usr/local/bin/osctl
+      osctl cluster create --name talos $TALOS
+      mkdir -p /home/$GUESTUSER/.kube
+      while ! osctl kubeconfig > /home/$GUESTUSER/.kube/config 2> /dev/null; do
+        echo 'waiting for talos cluster to init...'
+        sleep 5
+      done
+      kubectl apply -f $TALOSYAML/psp.yaml
+      kubectl apply -f $TALOSYAML/coredns.yaml
+      kubectl apply -f $TALOSYAML/flannel.yaml"
 
 USERDATA_centos="\
 $USERDATA_shared
@@ -495,6 +520,40 @@ exec-on-all-nodes() {
   done
 }
 
+wait-for-node-init() {
+  node=$1
+  while ! ssh $SSHOPTS $GUESTUSER@$node 'ls ~/.init-completed > /dev/null 2>&1'; do
+    echo "waiting for $node to init..."
+    sleep 5
+  done
+}
+
+install-kubeconfig() {
+  mkdir -p ~/.kube
+  scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl
+
+  hyperalias="kubectl --kubeconfig ~/.kube/config.hyperctl"
+  hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
+
+  cachedir="$HOME/.kube/cache/discovery/$CIDR.10_6443/"
+  if [ -a $cachedir ]; then
+    echo
+    echo "deleting previous $cachedir"
+    echo
+    rm -rf $cachedir
+  fi
+
+  echo
+  $hyperctl get pods --all-namespaces
+  $hyperctl get nodes
+
+  echo
+  echo "to setup bash alias, exec:"
+  echo
+  echo "echo \"alias hyperctl='$hyperalias'\" >> ~/.profile"
+  echo "source ~/.profile"
+}
+
 help() {
 cat << EOF
   Practice real Kubernetes configurations on a local multi-node cluster.
@@ -555,6 +614,9 @@ for arg in "$@"; do
       echo "       CNI: $CNI"
       echo "    CNINET: $CNINET"
       echo "   CNIYAML: $CNIYAML"
+      echo " DOCKERCLI: $DOCKERCLI"
+      echo "  TALOSVER: $TALOSVER"
+      echo "     TALOS: $TALOS"
     ;;
     print)
       sudo echo
@@ -598,10 +660,7 @@ for arg in "$@"; do
       workernodes=( $(get-worker-nodes) )
 
       for node in ${allnodes[@]}; do
-        while ! ssh $SSHOPTS $GUESTUSER@$node 'ls ~/.init-completed > /dev/null 2>&1'; do
-          echo "waiting for $node to init..."
-          sleep 5
-        done
+        wait-for-node-init $node
       done
 
       echo "all nodes are pre-initialized, going to init k8s..."
@@ -626,29 +685,7 @@ for arg in "$@"; do
         ssh $SSHOPTS $GUESTUSER@$node "sudo $joincmd < /dev/null"
       done
 
-      mkdir -p ~/.kube
-      scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl
-
-      hyperalias="kubectl --kubeconfig ~/.kube/config.hyperctl"
-      hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
-
-      cachedir="$HOME/.kube/cache/discovery/$CIDR.10_6443/"
-      if [ -a $cachedir ]; then
-        echo
-        echo "deleting previous $cachedir"
-        echo
-        rm -rf $cachedir
-      fi
-
-      echo
-      $hyperctl get pods --all-namespaces
-      $hyperctl get nodes
-
-      echo
-      echo "to setup bash alias, exec:"
-      echo
-      echo "echo \"alias hyperctl='$hyperalias'\" >> ~/.profile"
-      echo "source ~/.profile"
+      install-kubeconfig
     ;;
     reboot)
       exec-on-all-nodes "sudo reboot"
@@ -745,7 +782,16 @@ for arg in "$@"; do
       echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
     ;;
     talos)
-
+      wait-for-node-init master
+      echo
+      echo "installing talos on master..."
+      echo
+      if ( ! (ssh $SSHOPTS $GUESTUSER@master "/tmp/install-talos.sh")) {
+        echo "talos init has failed, aborting"
+        exit 1
+      }
+      echo
+      install-kubeconfig
     ;;
     iso)
       go-to-scriptdir
