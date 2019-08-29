@@ -97,6 +97,8 @@ $sshopts = @('-o LogLevel=ERROR', '-o StrictHostKeyChecking=no', '-o UserKnownHo
 
 $dockercli = 'https://github.com/StefanScherer/docker-cli-builder/releases/download/19.03.1/docker.exe'
 
+$helmurl = 'https://get.helm.sh/helm-v3.0.0-beta.2-windows-amd64.zip'
+
 # ----------------------------------------------------------------------
 
 $imageurl = "$imagebase/$image$archive"
@@ -589,10 +591,6 @@ function hyperctl() {
   kubectl --kubeconfig=$HOME/.kube/config.hyperctl $args
 }
 
-# function hyperhelm() {
-#   helm --kubeconfig=$HOME\.kube\config.hyperctl --home==$HOME\.hyperhelm $args
-# }
-
 function print-aliases($pwsalias, $bashalias) {
   echo ""
   echo "powershell alias:"
@@ -628,7 +626,7 @@ function install-kubeconfig() {
   print-aliases -pwsalias $pwsalias -bashalias $bashalias
 }
 
-function install-helm() {
+function install-helm2() {
   if ( ! (get-command "helm" -ea silentlycontinue)) {
     choco install kubernetes-helm
   }
@@ -647,21 +645,34 @@ function install-helm() {
 
   hyperctl --namespace kube-system create serviceaccount tiller
   hyperctl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-  & { invoke-expression "$helm init --service-account tiller" } # --tiller-tls-verify
+  & { invoke-expression "$helm init --service-account tiller" }
 
+  echo ""
   start-sleep -seconds 5
   hyperctl get pods --field-selector=spec.serviceAccountName=tiller --all-namespaces
 
-  # hyperhelm init --service-account tiller --upgrade
+  print-aliases -pwsalias $pwsalias -bashalias $bashalias
+  echo "  -> then you can use e.g.: hyperhelm version"
+}
 
-  # $cmd = 'hyperhelm init --tiller-tls-verify'
-  # set-clipboard -value $cmd
+function install-helm3() {
 
-  # echo ""
-  # echo "  -> after shell restart, execute:   $cmd"
-  # echo "                                       ^ copied to clipboard`n"
+  $helmzip = "$workdir\$(split-path $helmurl -leaf)"
+  if (!(test-path $helmzip)) {
+    download-file -url $helmurl -saveto $helmzip
+  }
+  $saveto = "C:\ProgramData\chocolatey\bin"
+  7z e -y $helmzip "-o$saveto" "windows-amd64/helm.exe"
+
+  echo ""
+  echo "helm version: $(helm version)"
+
+  $helm = "helm --kubeconfig $(to-unc-path2 $HOME\.kube\config.hyperctl)"
+  $pwsalias = "function hyperhelm() { $helm `$args }"
+  $bashalias = "alias hyperhelm='$helm'"
 
   print-aliases -pwsalias $pwsalias -bashalias $bashalias
+  echo "  -> then you can use e.g.: hyperhelm version"
 }
 
 echo ''
@@ -701,7 +712,8 @@ switch -regex ($args) {
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-        helm - setup helm cli
+       helm2 - setup helm 2 with tiller in k8s
+       helm3 - setup helm 3
 
   For more info, see: https://github.com/youurayy/hyperctl
 "@
@@ -916,8 +928,11 @@ switch -regex ($args) {
     echo $cmd
     echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
   }
-  ^helm$ {
-    install-helm
+  ^helm2$ {
+    install-helm2
+  }
+  ^helm3$ {
+    install-helm3
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr

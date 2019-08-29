@@ -113,6 +113,8 @@ SSHOPTS="-o LogLevel=ERROR -o StrictHostKeyChecking=false -o UserKnownHostsFile=
 
 DOCKERCLI="https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz"
 
+HELMURL="https://get.helm.sh/helm-v3.0.0-beta.2-darwin-amd64.tar.gz"
+
 # -------------------------CLOUD INIT-----------------------------------
 
 cloud-init() {
@@ -559,6 +561,8 @@ cat << EOF
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+       helm2 - setup helm 2 with tiller in k8s
+       helm3 - setup helm 3
 
   For more info, see: https://github.com/youurayy/hyperctl
 EOF
@@ -752,6 +756,12 @@ for arg in "$@"; do
       echo $cmd | pbcopy
       echo "4. "$cmd
       echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
+    ;;
+    helm2)
+    ;;
+    helm3)
+      # $HELMURL
+      # darwin-amd64/helm
     ;;
     iso)
       go-to-scriptdir

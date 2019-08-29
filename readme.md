@@ -59,6 +59,8 @@ chmod +x hyperctl.sh
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+       helm2 - setup helm 2 with tiller in k8s
+       helm3 - setup helm 3
 '
 
 # performs `brew install hyperkit qemu kubernetes-cli kubernetes-helm`.
@@ -245,7 +247,8 @@ set-executionpolicy remotesigned
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-        helm - setup helm cli
+       helm2 - setup helm 2 with tiller in k8s
+       helm3 - setup helm 3
 '
 
 # performs `choco install 7zip.commandline qemu-img kubernetes-cli kubernetes-helm`.
