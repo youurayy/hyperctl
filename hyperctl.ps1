@@ -581,15 +581,34 @@ function to-unc-path($path) {
   return $path.replace($item.root, '/').replace('\', '/')
 }
 
+function to-unc-path2($path) {
+  return ($path -replace '^[^:]*:?(.+)$', "`$1").replace('\', '/')
+}
+
 function hyperctl() {
   kubectl --kubeconfig=$HOME/.kube/config.hyperctl $args
+}
+
+# function hyperhelm() {
+#   helm --kubeconfig=$HOME\.kube\config.hyperctl --home==$HOME\.hyperhelm $args
+# }
+
+function print-aliases($pwsalias, $bashalias) {
+  echo ""
+  echo "powershell alias:"
+  echo "  write-output '$pwsalias' | out-file -encoding utf8 -append `$profile"
+  echo ""
+  echo "bash alias:"
+  echo "  write-output `"``n$($bashalias.replace('\', '\\'))``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
+  echo ""
+  echo "  -> restart your shell after applying the above"
 }
 
 function install-kubeconfig() {
   new-item -itemtype directory -force -path $HOME\.kube | out-null
   scp $sshopts $guestuser@master:.kube/config $HOME\.kube\config.hyperctl
 
-  $pwsalias = 'function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl $args }'
+  $pwsalias = "function hyperctl() { kubectl --kubeconfig=$HOME\.kube\config.hyperctl `$args }"
   $bashalias = "alias hyperctl='kubectl --kubeconfig=$HOME\.kube\config.hyperctl'"
 
   $cachedir="$HOME\.kube\cache\discovery\$cidr.10_6443"
@@ -600,21 +619,49 @@ function install-kubeconfig() {
     rmdir $cachedir -recurse
   }
 
-  echo "hyperctl get pods --all-namespaces`n"
+  echo "executing: hyperctl get pods --all-namespaces`n"
   hyperctl get pods --all-namespaces
   echo ""
-  echo "hyperctl get nodes`n"
+  echo "executing: hyperctl get nodes`n"
   hyperctl get nodes
 
-  echo ""
-  echo "powershell alias:"
-  echo "  write-output '$pwsalias' | out-file -encoding utf8 -append `$profile"
-  echo ""
-  echo "bash alias:"
-  echo "  write-output `"``n$($bashalias.replace('\', '\\'))``n`" | out-file -encoding utf8 -append -nonewline ~\.profile"
-  echo ""
-  echo ""
-  echo "(restart your shell after applying the above)"
+  print-aliases -pwsalias $pwsalias -bashalias $bashalias
+}
+
+function install-helm() {
+  if ( ! (get-command "helm" -ea silentlycontinue)) {
+    choco install kubernetes-helm
+  }
+
+  $helmdir = "$HOME\.hyperhelm"
+  $helm = "helm --kubeconfig $(to-unc-path2 $HOME\.kube\config.hyperctl) --home $(to-unc-path2 $helmdir)"
+  $pwsalias = "function hyperhelm() { $helm `$args }"
+  $bashalias = "alias hyperhelm='$helm'"
+
+  if (test-path $helmdir) {
+    echo ""
+    echo "deleting previous $helmdir"
+    echo ""
+    rmdir $helmdir -recurse
+  }
+
+  hyperctl --namespace kube-system create serviceaccount tiller
+  hyperctl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+  & { invoke-expression "$helm init --service-account tiller" } # --tiller-tls-verify
+
+  start-sleep -seconds 5
+  hyperctl get pods --field-selector=spec.serviceAccountName=tiller --all-namespaces
+
+  # hyperhelm init --service-account tiller --upgrade
+
+  # $cmd = 'hyperhelm init --tiller-tls-verify'
+  # set-clipboard -value $cmd
+
+  # echo ""
+  # echo "  -> after shell restart, execute:   $cmd"
+  # echo "                                       ^ copied to clipboard`n"
+
+  print-aliases -pwsalias $pwsalias -bashalias $bashalias
 }
 
 echo ''
@@ -654,12 +701,21 @@ switch -regex ($args) {
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+        helm - setup helm cli
 
   For more info, see: https://github.com/youurayy/hyperctl
 "@
   }
   ^install$ {
-    choco install 7zip.commandline qemu-img kubernetes-cli kubernetes-helm
+    if (!(get-command "7z" -ea silentlycontinue)) {
+      choco install 7zip.commandline
+    }
+    if (!(get-command "qemu-img" -ea silentlycontinue)) {
+      choco install qemu-img
+    }
+    if (!(get-command "kubectl" -ea silentlycontinue)) {
+      choco install kubernetes-cli
+    }
   }
   ^config$ {
     echo "    config: $config"
@@ -744,10 +800,6 @@ switch -regex ($args) {
   ^init$ {
     get-our-vms | %{ wait-for-node-init -opts $sshopts -name $_.name }
 
-    echo "all nodes are pre-initialized, making VM snapshots before k8s init..."
-
-    get-our-vms | checkpoint-vm
-
     $init = "sudo kubeadm init --pod-network-cidr=$cninet && \
       mkdir -p `$HOME/.kube && \
       sudo cp /etc/kubernetes/admin.conf `$HOME/.kube/config && \
@@ -767,7 +819,7 @@ switch -regex ($args) {
     get-our-vms | where { $_.name -match "node.+" } |
       %{
         $node = $_.name
-        echo "executing on $node`: $joincmd"
+        echo "`nexecuting on $node`: $joincmd"
 
         ssh $sshopts $guestuser@$node sudo $joincmd
         if (!$?) {
@@ -863,6 +915,9 @@ switch -regex ($args) {
     set-clipboard -value $cmd
     echo $cmd
     echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
+  }
+  ^helm$ {
+    install-helm
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr

@@ -10,6 +10,7 @@
 
 ## Advantages
 - TODO
+- minimalistic
 - simplicity
 
 ## Limitations
@@ -244,6 +245,7 @@ set-executionpolicy remotesigned
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
+        helm - setup helm cli
 '
 
 # performs `choco install 7zip.commandline qemu-img kubernetes-cli kubernetes-helm`.
