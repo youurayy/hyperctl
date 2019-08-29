@@ -627,9 +627,8 @@ function install-kubeconfig() {
 }
 
 function install-helm2() {
-  if ( ! (get-command "helm" -ea silentlycontinue)) {
-    choco install kubernetes-helm
-  }
+  # TODO
+  choco install kubernetes-helm
 
   $helmdir = "$HOME\.hyperhelm"
   $helm = "helm --kubeconfig $(to-unc-path2 $HOME\.kube\config.hyperctl) --home $(to-unc-path2 $helmdir)"
@@ -643,6 +642,7 @@ function install-helm2() {
     rmdir $helmdir -recurse
   }
 
+  echo ""
   hyperctl --namespace kube-system create serviceaccount tiller
   hyperctl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
   & { invoke-expression "$helm init --service-account tiller" }
@@ -656,7 +656,6 @@ function install-helm2() {
 }
 
 function install-helm3() {
-
   $helmzip = "$workdir\$(split-path $helmurl -leaf)"
   if (!(test-path $helmzip)) {
     download-file -url $helmurl -saveto $helmzip

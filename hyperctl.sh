@@ -295,6 +295,8 @@ set -e
 
 BASEDIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
+hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
+
 go-to-scriptdir() {
   cd $BASEDIR
 }
@@ -509,9 +511,6 @@ install-kubeconfig() {
   mkdir -p ~/.kube
   scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl
 
-  hyperalias="kubectl --kubeconfig ~/.kube/config.hyperctl"
-  hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
-
   cachedir="$HOME/.kube/cache/discovery/$CIDR.10_6443/"
   if [ -a $cachedir ]; then
     echo
@@ -527,7 +526,7 @@ install-kubeconfig() {
   echo
   echo "to setup bash alias, exec:"
   echo
-  echo "echo \"alias hyperctl='$hyperalias'\" >> ~/.profile"
+  echo "echo \"alias hyperctl='$hyperctl'\" >> ~/.profile"
   echo "source ~/.profile"
 }
 
@@ -575,7 +574,7 @@ if [ $# -eq 0 ]; then help; fi
 for arg in "$@"; do
   case $arg in
     install)
-      brew install hyperkit qemu kubernetes-cli kubernetes-helm
+      brew install hyperkit qemu kubernetes-cli
     ;;
     config)
       echo "    CONFIG: $CONFIG"
@@ -758,10 +757,42 @@ for arg in "$@"; do
       echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
     ;;
     helm2)
+      # (cover case when v2 brew was overwritten by v3 beta)
+      if ! helm version 2> /dev/null | grep 'v2' > /dev/null; then
+        echo brew reinstall kubernetes-helm
+      fi
+
+      helmdir="$HOME/.hyperhelm"
+      hyperhelm="helm --kubeconfig $HOME/.kube/config.hyperctl --home $helmdir"
+      alias="alias hyperhelm='$hyperhelm'"
+
+      if [ -a $helmdir ]; then
+        echo
+        echo "deleting previous $helmdir"
+        echo
+        rm -rf $helmdir
+      fi
+
+      echo
+      $hyperctl --namespace kube-system create serviceaccount tiller
+      $hyperctl create clusterrolebinding tiller --clusterrole cluster-admin \
+        --serviceaccount=kube-system:tiller
+      $hyperhelm init --service-account tiller
+
+      echo
+      sleep 5
+      $hyperctl get pods --field-selector=spec.serviceAccountName=tiller --all-namespaces
+
+      echo
+      echo "to setup bash alias, exec:"
+      echo
+      echo "echo \"alias hyperhelm='$hyperhelm'\" >> ~/.profile"
+      echo "source ~/.profile"
     ;;
     helm3)
       # $HELMURL
       # darwin-amd64/helm
+      # /usr/local/bin/helm
     ;;
     iso)
       go-to-scriptdir
