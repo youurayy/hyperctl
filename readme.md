@@ -38,13 +38,16 @@ chmod +x hyperctl.sh
 
   Commands:
 
-     install - install basic homebrew packages
+     (pre-requisites are marked with ->)
+
+  -> install - install basic homebrew packages
       config - show script config vars
        print - print contents of relevant config files
-         net - create or reset the vmnet config
-        dhcp - append to the dhcp registry
-       hosts - append node names to etc/hosts
-       image - download the VM image
+  ->     net - create or update the vmnet config
+  ->    dhcp - append to the dhcp registry
+       reset - reset the vmnet and dhpc configs
+  ->   hosts - append node names to etc/hosts
+  ->   image - download the VM image
       master - create and launch master node
        nodeN - create and launch worker node (node1, node2, ...)
         info - display info about nodes
@@ -103,6 +106,11 @@ chmod +x hyperctl.sh
 # this is necessary to have predictable IPs.
 # (MACs are generated from UUIDs by the vmnet framework.)
 ./hyperctl.sh dhcp
+
+# if initialization through 'net' and 'dhcp' commands is unsuccessful, i.e. the
+# vmnet framework assigns our VMs wrong IP addresses, this commands deletes
+# the above two files, after which you can manually reboot and try again.
+./hyperctl.sh reset
 
 # appends IP/hostname pairs from the NODES config to the /etc/hosts.
 # (the same hosts entries will also be installed into every node)
@@ -226,12 +234,14 @@ set-executionpolicy remotesigned
 
   Commands:
 
-     install - install basic chocolatey packages
+     (pre-requisites are marked with ->)
+
+  -> install - install basic chocolatey packages
       config - show script config vars
        print - print etc/hosts, network interfaces and mac addresses
-         net - install private or public host network
-       hosts - append private network node names to etc/hosts
-       image - download the VM image
+  ->     net - install private or public host network
+  ->   hosts - append private network node names to etc/hosts
+  ->   image - download the VM image
       master - create and launch master node
        nodeN - create and launch worker node (node1, node2, ...)
         info - display info about nodes

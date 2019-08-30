@@ -77,7 +77,7 @@ DISKDEV="ahci-hd"
 # user for debug/tty:
 # BACKGROUND=
 # use for prod/ssh:
-BACKGROUND='>> output.log 2>&1 &'
+BACKGROUND='> output.log 2>&1 &'
 
 NODES=(
   "master 24AF0C19-3B96-487C-92F7-584C9932DD96 $CIDR.10 32:a2:b4:36:57:16"
@@ -297,6 +297,9 @@ BASEDIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
 hyperctl="kubectl --kubeconfig $HOME/.kube/config.hyperctl"
 
+DHCPD_LEASES='/var/db/dhcpd_leases'
+VMMET_PLIST='/Library/Preferences/SystemConfiguration/com.apple.vmnet.plist'
+
 go-to-scriptdir() {
   cd $BASEDIR
 }
@@ -318,8 +321,8 @@ get_mac() {
 }
 
 dhcpd-leases() {
-cat << EOF | sudo tee -a /var/db/dhcpd_leases
-$(for i in `seq 9 -1 0`; do echo "{
+cat << EOF | sudo tee -a $DHCPD_LEASES
+$(for i in `seq 0 1 9`; do echo "{
         name=$(get_host $i)
         ip_address=$(get_ip $i)
         hw_address=1,$(get_mac $i)
@@ -448,7 +451,7 @@ EOF
 }
 
 create-vmnet() {
-cat << EOF | sudo tee /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist
+cat << EOF | sudo tee $VMMET_PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -507,6 +510,11 @@ wait-for-node-init() {
   done
 }
 
+kill_all_vms() {
+  go-to-scriptdir
+  sudo find $WORKDIR -name machine.pid -exec sh -c 'kill -9 $(cat $1)' sh {} ';'
+}
+
 help() {
 cat << EOF
   Practice real Kubernetes configurations on a local multi-node cluster.
@@ -516,13 +524,16 @@ cat << EOF
 
   Commands:
 
-     install - install basic homebrew packages
+     (pre-requisites are marked with ->)
+
+  -> install - install basic homebrew packages
       config - show script config vars
        print - print contents of relevant config files
-         net - create or reset the vmnet config
-        dhcp - append to the dhcp registry
-       hosts - append node names to etc/hosts
-       image - download the VM image
+  ->     net - create or update the vmnet config
+  ->    dhcp - append to the dhcp registry
+       reset - reset the vmnet and dhpc configs
+  ->   hosts - append node names to etc/hosts
+  ->   image - download the VM image
       master - create and launch master node
        nodeN - create and launch worker node (node1, node2, ...)
         info - display info about nodes
@@ -551,7 +562,15 @@ if [ $# -eq 0 ]; then help; fi
 for arg in "$@"; do
   case $arg in
     install)
-      brew install hyperkit qemu kubernetes-cli
+      if ! which hyperkit > /dev/null; then
+        brew install hyperkit
+      fi
+      if ! which qemu-img > /dev/null; then
+        brew install qemu
+      fi
+      if ! which kubectl > /dev/null; then
+        brew install kubernetes-cli
+      fi
     ;;
     config)
       echo "    CONFIG: $CONFIG"
@@ -574,10 +593,10 @@ for arg in "$@"; do
       sudo echo
 
       echo "***** com.apple.vmnet.plist *****"
-      sudo cat /Library/Preferences/SystemConfiguration/com.apple.vmnet.plist
+      sudo cat $VMMET_PLIST || true
 
-      echo "***** /var/db/dhcpd_leases *****"
-      cat /var/db/dhcpd_leases
+      echo "***** $DHCPD_LEASES *****"
+      cat $DHCPD_LEASES || true
 
       echo "***** /etc/hosts *****"
       cat /etc/hosts
@@ -587,6 +606,13 @@ for arg in "$@"; do
     ;;
     dhcp)
       dhcpd-leases
+    ;;
+    reset)
+      sudo rm -f \
+        $VMMET_PLIST \
+        $DHCPD_LEASES
+      echo -e "deleted\n  $VMMET_PLIST\nand\n  $DHCPD_LEASES\n\n" \
+        "-> you sould reboot now, then use ./hyperkit.sh net dhcp"
     ;;
     hosts)
       echo "$(etc-hosts)" | sudo tee -a /etc/hosts
@@ -677,10 +703,10 @@ for arg in "$@"; do
       done
     ;;
     kill)
-      go-to-scriptdir
-      sudo find $WORKDIR -name machine.pid -exec sh -c 'kill -9 $(cat $1)' sh {} ';'
+      kill_all_vms
     ;;
     delete)
+      kill_all_vms
       go-to-scriptdir
       find $WORKDIR/* -maxdepth 0 -type d -exec rm -rf {} ';'
     ;;
@@ -753,9 +779,8 @@ for arg in "$@"; do
     ;;
     helm2)
       # (cover case when v2 brew was overwritten by v3 beta)
-      # todo: head 1
-      if ! helm version 2> /dev/null | grep 'v2' > /dev/null; then
-        echo brew reinstall kubernetes-helm
+      if ! helm version 2> /dev/null | head -n 1 | grep 'v2' > /dev/null; then
+        brew reinstall kubernetes-helm
       fi
 
       helmdir="$HOME/.hyperhelm"
@@ -789,7 +814,7 @@ for arg in "$@"; do
       if ! [ -a $helmzip ]; then
         curl -L $HELMURL -o $helmzip
       fi
-      tar zxvf $helmzip -C ./usr/local/bin --strip 1 darwin-amd64/helm
+      tar zxf $helmzip -C /usr/local/bin --strip 1 darwin-amd64/helm
       echo
       echo "helm version: $(helm version)"
 

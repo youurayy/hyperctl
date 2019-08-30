@@ -627,20 +627,11 @@ function install-kubeconfig() {
 }
 
 function install-helm2() {
-  # TODO (cover case when v2 brew was overwritten by v3 beta)
-
-  if ( ( helm2 version 2> $null | select -first 1 ) -match 'v2' ) {
-    echo "v2"
+  # (cover case when v2 brew was overwritten by v3 beta)
+  if ( (get-command "helm" -ea silentlycontinue) -and
+    (helm version 2> $null | select -first 1 ) -match 'v2')) {
+    choco install kubernetes-helm
   }
-  else {
-    echo "no v2"
-  }
-
-
-
-  exit
-
-  choco install kubernetes-helm
 
   $helmdir = "$HOME\.hyperhelm"
   $helm = "helm --kubeconfig $(to-unc-path2 $HOME\.kube\config.hyperctl) --home $(to-unc-path2 $helmdir)"
@@ -698,16 +689,18 @@ switch -regex ($args) {
   Practice real Kubernetes configurations on a local multi-node cluster.
   Inspect and optionally customize this script before use.
 
-  Usage: .\hyperv.ps1 command+
+  Usage: .\hyperctl.ps1 command+
 
   Commands:
 
-     install - install basic chocolatey packages
+     (pre-requisites are marked with ->)
+
+  -> install - install basic chocolatey packages
       config - show script config vars
        print - print etc/hosts, network interfaces and mac addresses
-         net - install private or public host network
-       hosts - append private network node names to etc/hosts
-       image - download the VM image
+  ->     net - install private or public host network
+  ->   hosts - append private network node names to etc/hosts
+  ->   image - download the VM image
       master - create and launch master node
        nodeN - create and launch worker node (node1, node2, ...)
         info - display info about nodes
