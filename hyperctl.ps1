@@ -628,9 +628,9 @@ function install-kubeconfig() {
 
 function install-helm2() {
   # (cover case when v2 brew was overwritten by v3 beta)
-  if ( (get-command "helm" -ea silentlycontinue) -and
-    (helm version 2> $null | select -first 1 ) -match 'v2')) {
-    choco install kubernetes-helm
+  if ( !(get-command "helm" -ea silentlycontinue) -or
+    !((helm version | select -first 1 ) -match 'v2')) {
+    choco install -y --force kubernetes-helm
   }
 
   $helmdir = "$HOME\.hyperhelm"
@@ -724,13 +724,13 @@ switch -regex ($args) {
   }
   ^install$ {
     if (!(get-command "7z" -ea silentlycontinue)) {
-      choco install 7zip.commandline
+      choco install -y 7zip.commandline
     }
     if (!(get-command "qemu-img" -ea silentlycontinue)) {
-      choco install qemu-img
+      choco install -y qemu-img
     }
     if (!(get-command "kubectl" -ea silentlycontinue)) {
-      choco install kubernetes-cli
+      choco install -y kubernetes-cli
     }
   }
   ^config$ {
