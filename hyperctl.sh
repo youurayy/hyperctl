@@ -109,7 +109,7 @@ case $CNI in
   ;;
 esac
 
-SSHOPTS="-o LogLevel=ERROR -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null"
+SSHOPTS="-o ConnectTimeout=5 -o LogLevel=ERROR -o StrictHostKeyChecking=false -o UserKnownHostsFile=/dev/null"
 
 DOCKERCLI="https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz"
 
@@ -507,29 +507,6 @@ wait-for-node-init() {
   done
 }
 
-install-kubeconfig() {
-  mkdir -p ~/.kube
-  scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl
-
-  cachedir="$HOME/.kube/cache/discovery/$CIDR.10_6443/"
-  if [ -a $cachedir ]; then
-    echo
-    echo "deleting previous $cachedir"
-    echo
-    rm -rf $cachedir
-  fi
-
-  echo
-  $hyperctl get pods --all-namespaces
-  $hyperctl get nodes
-
-  echo
-  echo "to setup bash alias, exec:"
-  echo
-  echo "echo \"alias hyperctl='$hyperctl'\" >> ~/.profile"
-  echo "source ~/.profile"
-}
-
 help() {
 cat << EOF
   Practice real Kubernetes configurations on a local multi-node cluster.
@@ -660,7 +637,25 @@ for arg in "$@"; do
         ssh $SSHOPTS $GUESTUSER@$node "sudo $joincmd < /dev/null"
       done
 
-      install-kubeconfig
+      mkdir -p ~/.kube
+      scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl
+
+      cachedir="$HOME/.kube/cache/discovery/$CIDR.10_6443/"
+      if [ -a $cachedir ]; then
+        echo
+        echo "deleting previous $cachedir"
+        echo
+        rm -rf $cachedir
+      fi
+
+      echo
+      $hyperctl get pods --all-namespaces
+      $hyperctl get nodes
+      echo
+      echo "to setup bash alias, exec:"
+      echo
+      echo "echo \"alias hyperctl='$hyperctl'\" >> ~/.profile"
+      echo "source ~/.profile"
     ;;
     reboot)
       exec-on-all-nodes "sudo reboot"
@@ -764,7 +759,6 @@ for arg in "$@"; do
 
       helmdir="$HOME/.hyperhelm"
       hyperhelm="helm --kubeconfig $HOME/.kube/config.hyperctl --home $helmdir"
-      alias="alias hyperhelm='$hyperhelm'"
 
       if [ -a $helmdir ]; then
         echo
@@ -790,9 +784,21 @@ for arg in "$@"; do
       echo "source ~/.profile"
     ;;
     helm3)
-      # $HELMURL
-      # darwin-amd64/helm
-      # /usr/local/bin/helm
+      helmzip=$WORKDIR/$(basename $HELMURL)
+      if ! [ -a $helmzip ]; then
+        curl -L $HELMURL -o $helmzip
+      fi
+      tar zxvf $helmzip -C ./usr/local/bin --strip 1 darwin-amd64/helm
+      echo
+      echo "helm version: $(helm version)"
+
+      hyperhelm="helm --kubeconfig $HOME/.kube/config.hyperctl"
+
+      echo
+      echo "to setup bash alias, exec:"
+      echo
+      echo "echo \"alias hyperhelm='$hyperhelm'\" >> ~/.profile"
+      echo "source ~/.profile"
     ;;
     iso)
       go-to-scriptdir

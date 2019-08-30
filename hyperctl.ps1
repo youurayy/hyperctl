@@ -627,7 +627,7 @@ function install-kubeconfig() {
 }
 
 function install-helm2() {
-  # TODO
+  # TODO (cover case when v2 brew was overwritten by v3 beta)
   choco install kubernetes-helm
 
   $helmdir = "$HOME\.hyperhelm"
