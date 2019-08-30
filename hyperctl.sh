@@ -753,6 +753,7 @@ for arg in "$@"; do
     ;;
     helm2)
       # (cover case when v2 brew was overwritten by v3 beta)
+      # todo: head 1
       if ! helm version 2> /dev/null | grep 'v2' > /dev/null; then
         echo brew reinstall kubernetes-helm
       fi
