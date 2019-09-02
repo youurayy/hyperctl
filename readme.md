@@ -66,7 +66,8 @@ chmod +x hyperctl.sh
        helm3 - setup helm 3
 '
 
-# performs `brew install hyperkit qemu kubernetes-cli kubernetes-helm`.
+# performs `brew install hyperkit qemu kubernetes-cli`.
+# (will not install the package if you already have the required binary in path)
 # (qemu is necessary for `qemu-img`)
 # you may perform these manually / selectively instead.
 ./hyperctl.sh install
@@ -261,7 +262,8 @@ set-executionpolicy remotesigned
        helm3 - setup helm 3
 '
 
-# performs `choco install 7zip.commandline qemu-img kubernetes-cli kubernetes-helm`.
+# performs `choco install 7zip.commandline qemu-img kubernetes-cli`
+# (will not install the package if you already have the required binary in path)
 # you may instead perform these manually / selectively instead.
 # note: 7zip is needed to extract .xz archives
 # note: qemu-img is needed convert images to vhdx
