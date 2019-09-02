@@ -25,6 +25,7 @@
 
 # tested on Hyperkit 0.20190802 on macOS 10.14.5 w/ APFS, guest images Centos 1907 and Ubuntu 18.04
 # note: `sudo` is necessary for access to macOS Hypervisor and vmnet frameworks, and /etc/hosts config
+# hint: disable sudo timeout by: `echo "Defaults    timestamp_timeout=-1" | sudo tee /private/etc/sudoers.d/sudo-notimeout`
 
 # download the script
 cd workdir
