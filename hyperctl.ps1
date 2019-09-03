@@ -847,10 +847,10 @@ switch -regex ($args) {
     install-kubeconfig
   }
   ^reboot$ {
-    get-our-vms | %{ $node = $_.name; $(ssh $sshopts $guestuser@${$node} 'sudo reboot') }
+    get-our-vms | %{ $node = $_.name; $(ssh $sshopts $guestuser@$node 'sudo reboot') }
   }
   ^shutdown$ {
-    get-our-vms | %{ $node = $_.name; $(ssh $sshopts $guestuser@${$node} 'sudo shutdown -h now') }
+    get-our-vms | %{ $node = $_.name; $(ssh $sshopts $guestuser@$node 'sudo shutdown -h now') }
   }
   ^save$ {
     get-our-vms | checkpoint-vm
