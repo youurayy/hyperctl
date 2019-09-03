@@ -847,10 +847,10 @@ switch -regex ($args) {
     install-kubeconfig
   }
   ^reboot$ {
-    get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo reboot') }
+    get-our-vms | %{ $(ssh $sshopts $guestuser@${$_.name} 'sudo reboot') }
   }
   ^shutdown$ {
-    get-our-vms | %{ $(ssh $sshopts $guestuser@$_.name 'sudo shutdown -h now') }
+    get-our-vms | %{ $(ssh $sshopts $guestuser@${$_.name} 'sudo shutdown -h now') }
   }
   ^save$ {
     get-our-vms | checkpoint-vm
@@ -917,7 +917,7 @@ switch -regex ($args) {
     echo ""
 
     $unc = to-unc-path -path $HOME
-    $cmd = "sudo mkdir -p $unc && sudo mount -t cifs //$CIDR.1/hyperctl $unc -o sec=ntlm,username=$GUESTUSER,vers=3.0,sec=ntlmv2,noperm"
+    $cmd = "sudo mkdir -p $unc && sudo mount -t cifs //$cidr.1/hyperctl $unc -o sec=ntlm,username=$guestuser,vers=3.0,sec=ntlmv2,noperm"
     set-clipboard -value $cmd
     echo $cmd
     echo "  ^ copied to the clipboard, paste & execute on master:"
