@@ -415,8 +415,6 @@ function create-machine($zwitch, $vmname, $cpus, $mem, $hdd, $vhdxtmpl, $cblock,
     set-vmcomport -vmname $vmname -number 2 -path \\.\pipe\$vmname
   }
   start-vm -name $vmname
-
-  start-sleep -seconds 1
 }
 
 function delete-machine($name) {
