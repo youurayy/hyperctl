@@ -515,6 +515,17 @@ kill_all_vms() {
   sudo find $WORKDIR -name machine.pid -exec sh -c 'kill -9 $(cat $1)' sh {} ';'
 }
 
+print-local-repo-tips() {
+cat << EOF
+# you can now publish your apps:
+TAG=master:30699/yourapp:$(git log --pretty=format:'%h' -n 1)
+docker build ../yourapp/stuff --tag $TAG
+docker push $TAG
+sed -i '' -e "s~image: .*$~image: ${TAG}~" ../yourapp/chart/values.yaml
+hyperhelm install yourapp ../yourapp/chart/
+EOF
+}
+
 help() {
 cat << EOF
   Practice real Kubernetes configurations on a local multi-node cluster.
@@ -550,6 +561,7 @@ cat << EOF
        share - setup local fs sharing with docker on master
        helm2 - setup helm 2 with tiller in k8s
        helm3 - setup helm 3
+        repo - install local docker repo in k8s
 
   For more info, see: https://github.com/youurayy/hyperctl
 EOF
@@ -825,6 +837,38 @@ for arg in "$@"; do
       echo
       echo "echo \"alias hyperhelm='$hyperhelm'\" >> ~/.profile"
       echo "source ~/.profile"
+    ;;
+    repo)
+      # add remote helm repo
+      hyperhelm repo add stable https://kubernetes-charts.storage.googleapis.com
+      hyperhelm repo update
+
+      # prepare secrets for local repo
+      certs=$WORKDIR/certs
+      mkdir -p $certs
+      openssl req -newkey rsa:4096 -nodes -sha256 -subj "/C=/ST=/L=/O=/CN=master" \
+        -keyout $certs/tls.key -x509 -days 365 -out $certs/tls.cert
+      hyperctl create secret tls master --cert=$certs/tls.cert --key=$certs/tls.key
+
+      # distribute certs to our nodes
+      allnodes=( $(get-all-nodes) )
+      for node in ${allnodes[@]}; do
+        scp $SSHOPTS $certs/tls.cert $GUESTUSER@$node:
+        ssh $SSHOPTS $GUESTUSER@$node sudo mkdir -p /etc/docker/certs.d/master:30699/
+        ssh $SSHOPTS $GUESTUSER@$node sudo mv tls.cert /etc/docker/certs.d/master:30699/ca.crt
+      done
+
+      # launch local repo on master
+      hyperhelm install registry stable/docker-registry \
+        --set tolerations[0].key=node-role.kubernetes.io/master \
+        --set tolerations[0].operator=Exists \
+        --set tolerations[0].effect=NoSchedule \
+        --set nodeSelector.kubernetes\\.io/hostname=master \
+        --set tlsSecretName=master \
+        --set service.type=NodePort \
+        --set service.nodePort=30699
+
+      print-local-repo-tips
     ;;
     iso)
       go-to-scriptdir
