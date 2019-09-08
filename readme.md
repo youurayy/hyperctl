@@ -8,17 +8,8 @@
 - Multi-node (or single-node) Kubernetes on CentOS/Ubuntu in Hyper-V/Hyperkit
 - Docker on Desktop without Docker for Desktop
 
-## Advantages
-- TODO
-- minimalistic
-- simplicity
-
-## Limitations
-- TODO
-- no cifs events/osx share; hyperkit time sync;
-
 ## Changelog
-- Current state: pre-release; do not use yet;
+- v1.0.0 initial release
 
 # Mac / Hyperkit
 ```bash
@@ -77,6 +68,7 @@ chmod +x hyperctl.sh
 # note: to quickly change distro, do `echo bionic >> .distro`
 ./hyperctl.sh config
 '
+   VERSION: v1.0.0
     CONFIG: centos
     DISTRO: centos
    WORKDIR: ./tmp
@@ -274,6 +266,7 @@ set-executionpolicy remotesigned
 # note: to quickly change distro, do e.g. `echo centos >> .distro`
 .\hyperctl.ps1 config
 '
+   version: v1.0.0
     config: bionic
     distro: ubuntu
    workdir: .\tmp

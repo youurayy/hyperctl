@@ -4,6 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
+VERSION="v1.0.0"
 WORKDIR="./tmp"
 GUESTUSER=$USER
 SSHPATH="$HOME/.ssh/id_rsa.pub"
@@ -19,11 +20,11 @@ CONFIG=${CONFIG:-"centos"}
 case $CONFIG in
   bionic)
     DISTRO="ubuntu"
-    VERSION="18.04"
-    IMAGE="ubuntu-$VERSION-server-cloudimg-amd64"
-    IMAGEURL="https://cloud-images.ubuntu.com/releases/server/$VERSION/release"
+    IMGVERS="18.04"
+    IMAGE="ubuntu-$IMGVERS-server-cloudimg-amd64"
+    IMAGEURL="https://cloud-images.ubuntu.com/releases/server/$IMGVERS/release"
     SHA256FILE="SHA256SUMS"
-    KERNURL="https://cloud-images.ubuntu.com/releases/server/$VERSION/release/unpacked"
+    KERNURL="https://cloud-images.ubuntu.com/releases/server/$IMGVERS/release/unpacked"
     KERNEL="$IMAGE-vmlinuz-generic"
     INITRD="$IMAGE-initrd-generic"
     IMGTYPE="vmdk"
@@ -31,11 +32,11 @@ case $CONFIG in
   ;;
   disco)
     DISTRO="ubuntu"
-    VERSION="19.04"
-    IMAGE="ubuntu-$VERSION-server-cloudimg-amd64"
-    IMAGEURL="https://cloud-images.ubuntu.com/releases/server/$VERSION/release"
+    IMGVERS="19.04"
+    IMAGE="ubuntu-$IMGVERS-server-cloudimg-amd64"
+    IMAGEURL="https://cloud-images.ubuntu.com/releases/server/$IMGVERS/release"
     SHA256FILE="SHA256SUMS"
-    KERNURL="https://cloud-images.ubuntu.com/releases/server/$VERSION/release/unpacked"
+    KERNURL="https://cloud-images.ubuntu.com/releases/server/$IMGVERS/release/unpacked"
     KERNEL="$IMAGE-vmlinuz-generic"
     INITRD="$IMAGE-initrd-generic"
     IMGTYPE="vmdk"
@@ -43,8 +44,8 @@ case $CONFIG in
   ;;
   centos)
     DISTRO="centos"
-    VERSION="1907"
-    IMAGE="CentOS-7-x86_64-GenericCloud-$VERSION"
+    IMGVERS="1907"
+    IMAGE="CentOS-7-x86_64-GenericCloud-$IMGVERS"
     IMAGEURL="https://cloud.centos.org/centos/7/images"
     SHA256FILE="sha256sum.txt"
     KERNURL="https://github.com/youurayy/hyperctl/releases/download/centos-kernel/"
@@ -585,6 +586,7 @@ for arg in "$@"; do
       fi
     ;;
     config)
+      echo "   VERSION: $VERSION"
       echo "    CONFIG: $CONFIG"
       echo "    DISTRO: $DISTRO"
       echo "   WORKDIR: $WORKDIR"

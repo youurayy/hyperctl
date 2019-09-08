@@ -4,6 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
+$version = 'v1.0.0'
 $workdir = '.\tmp'
 $guestuser = $env:USERNAME
 $sshpath = "$HOME\.ssh\id_rsa.pub"
@@ -22,19 +23,19 @@ switch ($config) {
   'bionic' {
     $distro = 'ubuntu'
     $generation = 2
-    $version="18.04"
-    $imagebase = "https://cloud-images.ubuntu.com/releases/server/$version/release"
+    $imgvers="18.04"
+    $imagebase = "https://cloud-images.ubuntu.com/releases/server/$imgvers/release"
     $sha256file = 'SHA256SUMS'
-    $image = "ubuntu-$version-server-cloudimg-amd64.img"
+    $image = "ubuntu-$imgvers-server-cloudimg-amd64.img"
     $archive = ""
   }
   'disco' {
     $distro = 'ubuntu'
     $generation = 2
-    $version="19.04"
-    $imagebase = "https://cloud-images.ubuntu.com/releases/server/$version/release"
+    $imgvers="19.04"
+    $imagebase = "https://cloud-images.ubuntu.com/releases/server/$imgvers/release"
     $sha256file = 'SHA256SUMS'
-    $image = "ubuntu-$version-server-cloudimg-amd64.img"
+    $image = "ubuntu-$imgvers-server-cloudimg-amd64.img"
     $archive = ""
   }
   'centos' {
@@ -42,8 +43,8 @@ switch ($config) {
     $generation = 1
     $imagebase = "https://cloud.centos.org/centos/7/images"
     $sha256file = 'sha256sum.txt'
-    $version = "1907"
-    $image = "CentOS-7-x86_64-GenericCloud-$version.raw"
+    $imgvers = "1907"
+    $image = "CentOS-7-x86_64-GenericCloud-$imgvers.raw"
     $archive = ".tar.gz"
   }
 }
@@ -734,6 +735,7 @@ switch -regex ($args) {
     }
   }
   ^config$ {
+    echo "   version: $version"
     echo "    config: $config"
     echo "    distro: $distro"
     echo "   workdir: $workdir"
