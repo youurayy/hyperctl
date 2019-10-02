@@ -12,7 +12,7 @@ if (!(test-path $sshpath)) {
   write-host "`n please configure `$sshpath or place a pubkey at $sshpath `n"
   exit
 }
-$sshpub = get-content $sshpath -raw
+$sshpub = $(get-content $sshpath -raw).trim()
 
 $config = $(get-content -path .\.distro -ea silentlycontinue | out-string).trim()
 if(!$config) {
@@ -76,6 +76,26 @@ $macs = @(
   '02069FBFC2B0', # node9
   '02F7E0C904D0' # node10
 )
+
+$kubepackages_latest = @"
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - kubelet
+  - kubeadm
+  - kubectl
+"@
+
+$kubepackages_mid_2019 = @"
+  - [ docker-ce, 19.03.1 ]
+  - [ docker-ce-cli, 19.03.1 ]
+  - [ containerd.io, 1.2.6 ]
+  - [ kubelet, 1.15.3 ]
+  - [ kubeadm, 1.15.3 ]
+  - [ kubectl, 1.15.3 ]
+"@
+
+$kubepackages = $kubepackages_mid_2019
 
 $cni = 'flannel'
 
@@ -241,12 +261,7 @@ packages:
   - cifs-utils
   - device-mapper-persistent-data
   - lvm2
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - kubelet
-  - kubeadm
-  - kubectl
+$kubepackages
 
 runcmd:
   - echo "sudo tail -f /var/log/messages" > /home/$guestuser/log
@@ -317,12 +332,7 @@ packages:
   - linux-cloud-tools-virtual
   - cifs-utils
   - chrony
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - kubelet
-  - kubectl
-  - kubeadm
+$kubepackages
 
 runcmd:
   - echo "sudo tail -f /var/log/syslog" > /home/$guestuser/log

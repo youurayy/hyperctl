@@ -93,6 +93,26 @@ NODES=(
   "node9  20DD5167-9FBE-439E-9849-E324E984FB96 $CIDR.19 f6:d4:b9:fd:20:c"
 )
 
+KUBEPACKAGES_latest="\
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - kubelet
+  - kubeadm
+  - kubectl
+"
+
+KUBEPACKAGES_mid_2019="\
+  - [ docker-ce, 19.03.1 ]
+  - [ docker-ce-cli, 19.03.1 ]
+  - [ containerd.io, 1.2.6 ]
+  - [ kubelet, 1.15.3 ]
+  - [ kubeadm, 1.15.3 ]
+  - [ kubectl, 1.15.3 ]
+"
+
+KUBEPACKAGES=$KUBEPACKAGES_mid_2019
+
 CNI="flannel"
 
 case $CNI in
@@ -207,12 +227,7 @@ packages:
   - cifs-utils
   - device-mapper-persistent-data
   - lvm2
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - kubelet
-  - kubeadm
-  - kubectl
+$KUBEPACKAGES
 
 runcmd:
   - echo 'sudo tail -f /var/log/messages' > /home/$GUESTUSER/log
@@ -268,12 +283,7 @@ package_upgrade: true
 packages:
   - cifs-utils
   - chrony
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - kubelet
-  - kubectl
-  - kubeadm
+$KUBEPACKAGES
 
 runcmd:
   - echo 'sudo tail -f /var/log/syslog' > /home/$GUESTUSER/log
