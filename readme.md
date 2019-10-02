@@ -390,6 +390,8 @@ node2  Running 2           4096              00:02:20.1000000 Operating normally
 # C:\WINDOWS\System32\vmcompute.exe -> Edit-> Code flow guard (CFG) ->
 # uncheck Override system settings -> # net stop vmcompute -> net start vmcompute
 
+# NOTE if Hyper-V VMs stop responding after updating to Windows 10 1903, perform `Restart-Service 'HV Host Service'` in an admin PowerShell.
+
 ```
 
 #### License: https://www.apache.org/licenses/LICENSE-2.0
