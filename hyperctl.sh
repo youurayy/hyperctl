@@ -4,7 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
-VERSION="v1.0.0"
+VERSION="v1.0.1"
 WORKDIR="./tmp"
 GUESTUSER=$USER
 SSHPATH="$HOME/.ssh/id_rsa.pub"
