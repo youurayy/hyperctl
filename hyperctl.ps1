@@ -4,7 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
-$version = 'v1.0.0'
+$version = 'v1.0.1'
 $workdir = '.\tmp'
 $guestuser = $env:USERNAME
 $sshpath = "$HOME\.ssh\id_rsa.pub"

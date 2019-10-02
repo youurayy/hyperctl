@@ -9,6 +9,7 @@
 - Docker on Desktop without Docker for Desktop
 
 ## Changelog
+- v1.0.1 repo cmd; selectable pkg versions
 - v1.0.0 initial release
 
 # Mac / Hyperkit
