@@ -56,6 +56,7 @@ chmod +x hyperctl.sh
        share - setup local fs sharing with docker on master
        helm2 - setup helm 2 with tiller in k8s
        helm3 - setup helm 3
+        repo - install local docker repo in k8s
 '
 
 # performs `brew install hyperkit qemu kubernetes-cli`.
@@ -253,6 +254,7 @@ set-executionpolicy remotesigned
        share - setup local fs sharing with docker on master
        helm2 - setup helm 2 with tiller in k8s
        helm3 - setup helm 3
+        repo - install local docker repo in k8s
 '
 
 # performs `choco install 7zip.commandline qemu-img kubernetes-cli`

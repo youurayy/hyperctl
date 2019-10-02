@@ -518,12 +518,12 @@ kill_all_vms() {
 
 print-local-repo-tips() {
 cat << EOF
-# you can now publish your apps:
+# you can now publish your apps, e.g.:
+
 TAG=master:30699/yourapp:$(git log --pretty=format:'%h' -n 1)
-docker build ../yourapp/stuff --tag $TAG
+docker build ../yourapp/image/ --tag $TAG
 docker push $TAG
-sed -i '' -e "s~image: .*$~image: ${TAG}~" ../yourapp/chart/values.yaml
-hyperhelm install yourapp ../yourapp/chart/
+hyperhelm install yourapp ../yourapp/chart/ --set image=$TAG
 EOF
 }
 

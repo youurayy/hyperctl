@@ -678,6 +678,17 @@ function install-helm3() {
   echo "  -> then you can use e.g.: hyperhelm version"
 }
 
+function print-local-repo-tips() {
+echo @"
+# you can now publish your apps, e.g.:
+
+TAG=master:30699/yourapp:`$(git log --pretty=format:'%h' -n 1)
+docker build ../yourapp/image/ --tag `$TAG
+docker push `$TAG
+hyperhelm install yourapp ../yourapp/chart/ --set image=`$TAG
+"@
+}
+
 echo ''
 
 if($args.count -eq 0) {
@@ -719,6 +730,7 @@ switch -regex ($args) {
        share - setup local fs sharing with docker on master
        helm2 - setup helm 2 with tiller in k8s
        helm3 - setup helm 3
+        repo - install local docker repo in k8s
 
   For more info, see: https://github.com/youurayy/hyperctl
 "@
@@ -939,6 +951,55 @@ switch -regex ($args) {
   }
   ^helm3$ {
     install-helm3
+  }
+  ^repo$ {
+    # install openssl if none is provided
+    # don't try to install one bc the install is intrusive and not fully automated
+    $openssl = "openssl.exe"
+    if(!(get-command "openssl" -ea silentlycontinue)) {
+      # fall back to cygwin openssl if installed
+      $openssl = "C:\tools\cygwin\bin\openssl.exe"
+      if(!(test-path $openssl)) {
+        echo "error: please make sure 'openssl' command is in the path"
+        echo "(or install Cygwin so that '$openssl' exists)"
+        echo ""
+        exit 1
+      }
+    }
+
+    # add remote helm repo
+    hyperhelm repo add stable https://kubernetes-charts.storage.googleapis.com
+    hyperhelm repo update
+
+    # prepare secrets for local repo
+    $certs="$workdir\certs"
+    md $certs -ea 0 | out-null
+    $expr = "$openssl req -newkey rsa:4096 -nodes -sha256 " +
+      "-subj `"/C=/ST=/L=/O=/CN=master`" -keyout $certs/tls.key -x509 " +
+      "-days 365 -out $certs/tls.cert"
+    invoke-expression $expr
+    hyperctl create secret tls master --cert=$certs/tls.cert --key=$certs/tls.key
+
+    # distribute certs to our nodes
+    get-our-vms | %{
+      $node = $_.name
+      $(scp $sshopts $certs/tls.cert $guestuser@$node`:)
+      $(ssh $sshopts $guestuser@$node 'sudo mkdir -p /etc/docker/certs.d/master:30699/')
+      $(ssh $sshopts $guestuser@$node 'sudo mv tls.cert /etc/docker/certs.d/master:30699/ca.crt')
+    }
+
+    hyperhelm install registry stable/docker-registry `
+      --set tolerations[0].key=node-role.kubernetes.io/master `
+      --set tolerations[0].operator=Exists `
+      --set tolerations[0].effect=NoSchedule `
+      --set nodeSelector.kubernetes\.io/hostname=master `
+      --set tlsSecretName=master `
+      --set service.type=NodePort `
+      --set service.nodePort=30699
+
+    echo ''
+    print-local-repo-tips
+    echo ''
   }
   ^iso$ {
     produce-yaml-contents -path "$($distro).yaml" -cblock $cidr
