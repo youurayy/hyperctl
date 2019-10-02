@@ -977,7 +977,7 @@ switch -regex ($args) {
       }
     }
 
-    # add remote helm repo
+    # add remote helm repo to you local ~/.helm registry
     hyperhelm repo add stable https://kubernetes-charts.storage.googleapis.com
     hyperhelm repo update
 
