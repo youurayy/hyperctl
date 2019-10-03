@@ -214,6 +214,8 @@ rm -rf ./tmp
 
 # tested with PowerShell 5.1 on Windows 10 Pro 1903, guest images Centos 1907 and Ubuntu 18.04
 # note: admin access is necessary for access to Windows Hyper-V framework and etc/hosts config
+# note: you may need to recurisvely remove public access (at least) from your ~/.ssh dir,
+#       (suggested: whole homedir) othwerwise ssh will refuse to work.
 
 # open PowerShell (Admin) prompt
 cd $HOME\your-workdir
