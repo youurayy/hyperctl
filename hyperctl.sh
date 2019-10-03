@@ -680,12 +680,18 @@ for arg in "$@"; do
         exit 1
       fi
 
-      joincmd=$(ssh $SSHOPTS $GUESTUSER@master 'sudo kubeadm token create --print-join-command')
-
-      for node in ${workernodes[@]}; do
-        echo "executing on $node: $joincmd"
-        ssh $SSHOPTS $GUESTUSER@$node "sudo $joincmd < /dev/null"
-      done
+      if [ "${#workernodes[@]}" -eq 0 ]; then
+        echo
+        echo "no worker nodes, removing NoSchedule taint from master..."
+        ssh $SSHOPTS $GUESTUSER@master 'kubectl taint nodes master node-role.kubernetes.io/master:NoSchedule-'
+        echo
+      else
+        joincmd=$(ssh $SSHOPTS $GUESTUSER@master 'sudo kubeadm token create --print-join-command')
+        for node in ${workernodes[@]}; do
+          echo "executing on $node: $joincmd"
+          ssh $SSHOPTS $GUESTUSER@$node "sudo $joincmd < /dev/null"
+        done
+      fi
 
       mkdir -p ~/.kube
       scp $SSHOPTS $GUESTUSER@master:.kube/config ~/.kube/config.hyperctl

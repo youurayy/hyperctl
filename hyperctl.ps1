@@ -854,19 +854,25 @@ switch -regex ($args) {
       exit 1
     }
 
-    $joincmd = $(ssh $sshopts $guestuser@master 'sudo kubeadm token create --print-join-command')
-
-    get-our-vms | where { $_.name -match "node.+" } |
-      %{
-        $node = $_.name
-        echo "`nexecuting on $node`: $joincmd"
-
-        ssh $sshopts $guestuser@$node sudo $joincmd
-        if (!$?) {
-          echo "$node init has failed, aborting"
-          exit 1
+    if((get-our-vms | where { $_.name -match "node.+" }).count -eq 0) {
+      echo ""
+      echo "no worker nodes, removing NoSchedule taint from master..."
+      ssh $sshopts $guestuser@master 'kubectl taint nodes master node-role.kubernetes.io/master:NoSchedule-'
+      echo ""
+    }
+    else {
+      $joincmd = $(ssh $sshopts $guestuser@master 'sudo kubeadm token create --print-join-command')
+      get-our-vms | where { $_.name -match "node.+" } |
+        %{
+          $node = $_.name
+          echo "`nexecuting on $node`: $joincmd"
+          ssh $sshopts $guestuser@$node sudo $joincmd
+          if (!$?) {
+            echo "$node init has failed, aborting"
+            exit 1
+          }
         }
-      }
+    }
 
     install-kubeconfig
   }
