@@ -134,7 +134,7 @@ SSHOPTS="-o ConnectTimeout=5 -o LogLevel=ERROR -o StrictHostKeyChecking=false -o
 
 DOCKERCLI="https://download.docker.com/mac/static/stable/x86_64/docker-19.03.1.tgz"
 
-HELMURL="https://get.helm.sh/helm-v3.0.0-beta.2-darwin-amd64.tar.gz"
+HELMURL="https://get.helm.sh/helm-v3.0.1-darwin-amd64.tar.gz"
 
 # -------------------------CLOUD INIT-----------------------------------
 
