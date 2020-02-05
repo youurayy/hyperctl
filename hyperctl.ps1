@@ -118,8 +118,7 @@ $sshopts = @('-o LogLevel=ERROR', '-o StrictHostKeyChecking=no', '-o UserKnownHo
 
 $dockercli = 'https://github.com/StefanScherer/docker-cli-builder/releases/download/19.03.1/docker.exe'
 
-# $helmurl = 'https://get.helm.sh/helm-v3.0.0-beta.2-windows-amd64.zip'
-$helmurl = 'https://get.helm.sh/helm-v3.0.2-windows-amd64.zip'
+$helmurl = 'https://get.helm.sh/helm-v3.0.3-windows-amd64.zip'
 
 # ----------------------------------------------------------------------
 
