@@ -9,7 +9,8 @@
 - Docker on Desktop without Docker for Desktop
 
 ## Changelog
-- v1.0.1 (WIP) repo cmd; selectable pkg versions; auto-untaint master if no workers
+- v1.0.2 preselect k8s version; remove runc workaround
+- v1.0.1 repo cmd; selectable pkg versions; auto-untaint master if no workers
 - v1.0.0 initial release
 
 # Mac / Hyperkit

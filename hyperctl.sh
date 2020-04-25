@@ -4,7 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
-VERSION="v1.0.1"
+VERSION="v1.0.2"
 WORKDIR="./tmp"
 GUESTUSER=$USER
 SSHPATH="$HOME/.ssh/id_rsa.pub"
@@ -93,25 +93,22 @@ NODES=(
   "node9  20DD5167-9FBE-439E-9849-E324E984FB96 $CIDR.19 f6:d4:b9:fd:20:c"
 )
 
-KUBEPACKAGES_latest="\
+# https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64/repodata/filelists.xml
+# https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64/Packages
+# cmd+f "kubeadm"
+# KUBEVERSION='1.15.11'
+KUBEVERSION='1.16.9'
+# KUBEVERSION='1.17.5'
+# KUBEVERSION='1.18.2'
+
+KUBEPACKAGES="\
   - docker-ce
   - docker-ce-cli
   - containerd.io
-  - kubelet
-  - kubeadm
-  - kubectl
+  - [ kubelet, $KUBEVERSION ]
+  - [ kubeadm, $KUBEVERSION ]
+  - [ kubectl, $KUBEVERSION ]
 "
-
-KUBEPACKAGES_mid_2019="\
-  - [ docker-ce, 19.03.1 ]
-  - [ docker-ce-cli, 19.03.1 ]
-  - [ containerd.io, 1.2.6 ]
-  - [ kubelet, 1.15.3 ]
-  - [ kubeadm, 1.15.3 ]
-  - [ kubectl, 1.15.3 ]
-"
-
-KUBEPACKAGES=$KUBEPACKAGES_mid_2019
 
 CNI="flannel"
 

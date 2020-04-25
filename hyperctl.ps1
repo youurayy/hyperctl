@@ -4,7 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
-$version = 'v1.0.1'
+$version = 'v1.0.2'
 $workdir = '.\tmp'
 $guestuser = $env:USERNAME
 $sshpath = "$HOME\.ssh\id_rsa.pub"
@@ -77,25 +77,22 @@ $macs = @(
   '02F7E0C904D0' # node10
 )
 
-$kubepackages_latest = @"
+# https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64/repodata/filelists.xml
+# https://packages.cloud.google.com/apt/dists/kubernetes-xenial/main/binary-amd64/Packages
+# ctrl+f "kubeadm"
+# $kubeversion = '1.15.11'
+$kubeversion = '1.16.9'
+# $kubeversion = '1.17.5'
+# $kubeversion = '1.18.2'
+
+$kubepackages = @"
   - docker-ce
   - docker-ce-cli
   - containerd.io
-  - kubelet
-  - kubeadm
-  - kubectl
+  - [ kubelet, $kubeversion ]
+  - [ kubeadm, $kubeversion ]
+  - [ kubectl, $kubeversion ]
 "@
-
-$kubepackages_mid_2019 = @"
-  - [ docker-ce, 19.03.1 ]
-  - [ docker-ce-cli, 19.03.1 ]
-  - [ containerd.io, 1.2.6 ]
-  - [ kubelet, 1.15.3 ]
-  - [ kubeadm, 1.15.3 ]
-  - [ kubectl, 1.15.3 ]
-"@
-
-$kubepackages = $kubepackages_mid_2019
 
 $cni = 'flannel'
 
@@ -277,8 +274,6 @@ runcmd:
   - systemctl enable kubelet
   # https://github.com/kubernetes/kubeadm/issues/954
   - echo "exclude=kube*" >> /etc/yum.repos.d/kubernetes.repo
-  # https://github.com/kubernetes/kubernetes/issues/76531
-  - curl -L 'https://github.com/youurayy/runc/releases/download/v1.0.0-rc8-slice-fix-2/runc-centos.tgz' | tar --backup=numbered -xzf - -C `$(dirname `$(which runc))
   - systemctl start docker
   - touch /home/$guestuser/.init-completed
 "@
@@ -345,8 +340,6 @@ runcmd:
   - chmod o+r /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
   # https://github.com/kubernetes/kubeadm/issues/954
   - apt-mark hold kubeadm kubelet
-  # https://github.com/kubernetes/kubernetes/issues/76531
-  - curl -L 'https://github.com/youurayy/runc/releases/download/v1.0.0-rc8-slice-fix-2/runc-ubuntu.tbz' | tar --backup=numbered -xjf - -C `$(dirname `$(which runc))
   - touch /home/$guestuser/.init-completed
 "@
 }
