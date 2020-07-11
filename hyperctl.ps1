@@ -4,7 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
-$version = 'v1.0.2'
+$version = 'v1.0.3'
 $workdir = '.\tmp'
 $guestuser = $env:USERNAME
 $sshpath = "$HOME\.ssh\id_rsa.pub"
@@ -630,45 +630,13 @@ function install-kubeconfig() {
   print-aliases -pwsalias $pwsalias -bashalias $bashalias
 }
 
-function install-helm2() {
-  # (cover case when v2 brew was overwritten by v3 beta)
-  if ( !(get-command "helm" -ea silentlycontinue) -or
-    !((helm version | select -first 1 ) -match 'v2')) {
-    choco install -y --force kubernetes-helm
+function install-helm() {
+  if (!(get-command "helm" -ea silentlycontinue)) {
+    choco install -y kubernetes-helm
   }
-
-  $helmdir = "$HOME\.hyperhelm"
-  $helm = "helm --kubeconfig $(to-unc-path2 $HOME\.kube\config.hyperctl) --home $(to-unc-path2 $helmdir)"
-  $pwsalias = "function hyperhelm() { $helm `$args }"
-  $bashalias = "alias hyperhelm='$helm'"
-
-  if (test-path $helmdir) {
-    echo ""
-    echo "deleting previous $helmdir"
-    echo ""
-    rmdir $helmdir -recurse
+  else {
+    choco upgrade kubernetes-helm
   }
-
-  echo ""
-  hyperctl --namespace kube-system create serviceaccount tiller
-  hyperctl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-  & { invoke-expression "$helm init --service-account tiller" }
-
-  echo ""
-  start-sleep -seconds 5
-  hyperctl get pods --field-selector=spec.serviceAccountName=tiller --all-namespaces
-
-  print-aliases -pwsalias $pwsalias -bashalias $bashalias
-  echo "  -> then you can use e.g.: hyperhelm version"
-}
-
-function install-helm3() {
-  $helmzip = "$workdir\$(split-path $helmurl -leaf)"
-  if (!(test-path $helmzip)) {
-    download-file -url $helmurl -saveto $helmzip
-  }
-  $saveto = "C:\ProgramData\chocolatey\bin"
-  7z e -y $helmzip "-o$saveto" "windows-amd64/helm.exe"
 
   echo ""
   echo "helm version: $(helm version)"
@@ -747,6 +715,9 @@ switch -regex ($args) {
     }
     if (!(get-command "kubectl" -ea silentlycontinue)) {
       choco install -y kubernetes-cli
+    }
+    else {
+      choco upgrade kubernetes-cli
     }
   }
   ^config$ {
@@ -955,11 +926,8 @@ switch -regex ($args) {
     echo $cmd
     echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
   }
-  ^helm2$ {
-    install-helm2
-  }
-  ^helm3$ {
-    install-helm3
+  ^helm$ {
+    install-helm
   }
   ^repo$ {
     # install openssl if none is provided

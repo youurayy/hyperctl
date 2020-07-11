@@ -9,6 +9,7 @@
 - Docker on Desktop without Docker for Desktop
 
 ## Changelog
+- v1.0.3 remove runc workaround also from mac; remove helm 2 support; always update kubectl and helm
 - v1.0.2 preselect k8s version; remove runc workaround
 - v1.0.1 repo cmd; selectable pkg versions; auto-untaint master if no workers
 - v1.0.0 initial release
@@ -57,13 +58,12 @@ chmod +x hyperctl.sh
     timesync - setup sleepwatcher time sync
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-       helm2 - setup helm 2 with tiller in k8s
-       helm3 - setup helm 3
+        helm - setup helm 3
         repo - install local docker repo in k8s
 '
 
 # performs `brew install hyperkit qemu kubernetes-cli`.
-# (will not install the package if you already have the required binary in path)
+# (will not install the package if you already have the required binary in path; kubernetes-cli will be updated)
 # (qemu is necessary for `qemu-img`)
 # you may perform these manually / selectively instead.
 ./hyperctl.sh install
@@ -257,13 +257,12 @@ set-executionpolicy remotesigned
          iso - write cloud config data into a local yaml
       docker - setup local docker with the master node
        share - setup local fs sharing with docker on master
-       helm2 - setup helm 2 with tiller in k8s
-       helm3 - setup helm 3
+        helm - setup helm 3
         repo - install local docker repo in k8s
 '
 
 # performs `choco install 7zip.commandline qemu-img kubernetes-cli`
-# (will not install the package if you already have the required binary in path)
+# (will not install the package if you already have the required binary in path; kubernetes-cli will be updated)
 # you may instead perform these manually / selectively instead.
 # note: 7zip is needed to extract .xz archives
 # note: qemu-img is needed convert images to vhdx

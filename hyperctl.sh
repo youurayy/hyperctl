@@ -4,7 +4,7 @@
 
 # ---------------------------SETTINGS------------------------------------
 
-VERSION="v1.0.2"
+VERSION="v1.0.3"
 WORKDIR="./tmp"
 GUESTUSER=$USER
 SSHPATH="$HOME/.ssh/id_rsa.pub"
@@ -238,8 +238,6 @@ runcmd:
   - systemctl enable kubelet
   # https://github.com/kubernetes/kubeadm/issues/954
   - echo 'exclude=kube*' >> /etc/yum.repos.d/kubernetes.repo
-  # https://github.com/kubernetes/kubernetes/issues/76531
-  - curl -L 'https://github.com/youurayy/runc/releases/download/v1.0.0-rc8-slice-fix-2/runc-centos.tgz' | tar --backup=numbered -xzf - -C \$(dirname \$(which runc))
   - systemctl start docker
   - touch /home/$GUESTUSER/.init-completed"
 
@@ -292,8 +290,6 @@ runcmd:
   - chmod o+r /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
   # https://github.com/kubernetes/kubeadm/issues/954
   - apt-mark hold kubeadm kubelet
-  # https://github.com/kubernetes/kubernetes/issues/76531
-  - curl -L 'https://github.com/youurayy/runc/releases/download/v1.0.0-rc8-slice-fix-2/runc-ubuntu.tbz' | tar --backup=numbered -xjf - -C \$(dirname \$(which runc))
   - touch /home/$GUESTUSER/.init-completed"
 }
 
@@ -588,9 +584,7 @@ for arg in "$@"; do
       if ! which qemu-img > /dev/null; then
         brew install qemu
       fi
-      if ! which kubectl > /dev/null; then
-        brew install kubernetes-cli
-      fi
+      brew install kubernetes-cli
     ;;
     config)
       echo "   VERSION: $VERSION"
@@ -804,44 +798,9 @@ for arg in "$@"; do
       echo "4. "$cmd
       echo "  ^ copied to the clipboard, paste & execute locally to test the sharing"
     ;;
-    helm2)
-      # (cover case when v2 brew was overwritten by v3 beta)
-      if ! helm version 2> /dev/null | head -n 1 | grep 'v2' > /dev/null; then
-        brew reinstall kubernetes-helm
-      fi
+    helm)
+      brew install kubernetes-helm
 
-      helmdir="$HOME/.hyperhelm"
-      hyperhelm="helm --kubeconfig $HOME/.kube/config.hyperctl --home $helmdir"
-
-      if [ -a $helmdir ]; then
-        echo
-        echo "deleting previous $helmdir"
-        echo
-        rm -rf $helmdir
-      fi
-
-      echo
-      $hyperctl --namespace kube-system create serviceaccount tiller
-      $hyperctl create clusterrolebinding tiller --clusterrole cluster-admin \
-        --serviceaccount=kube-system:tiller
-      $hyperhelm init --service-account tiller
-
-      echo
-      sleep 5
-      $hyperctl get pods --field-selector=spec.serviceAccountName=tiller --all-namespaces
-
-      echo
-      echo "to setup bash alias, exec:"
-      echo
-      echo "echo \"alias hyperhelm='$hyperhelm'\" >> ~/.profile"
-      echo "source ~/.profile"
-    ;;
-    helm3)
-      helmzip=$WORKDIR/$(basename $HELMURL)
-      if ! [ -a $helmzip ]; then
-        curl -L $HELMURL -o $helmzip
-      fi
-      tar zxf $helmzip -C /usr/local/bin --strip 1 darwin-amd64/helm
       echo
       echo "helm version: $(helm version)"
 
