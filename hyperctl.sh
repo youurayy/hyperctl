@@ -54,6 +54,18 @@ case $CONFIG in
     IMGTYPE="raw"
     ARCHIVE=".tar.gz"
   ;;
+  k3os)
+    DISTRO="k3os"
+    IMGVERS="v0.8.0"
+    IMAGE="k3os-rootfs-amd64.tar.gz"
+    IMAGEURL="https://github.com/rancher/k3os/releases/download/$IMGVERS"
+    SHA256FILE="sha256sum-amd64.txt"
+    KERNURL="https://github.com/rancher/k3os/releases/download/$IMGVERS"
+    KERNEL="k3os-vmlinuz-amd64"
+    INITRD="k3os-kernel-amd64.squashfs"
+    IMGTYPE="raw"
+    ARCHIVE=".tar.gz"
+  ;;
 esac
 
 CIDR="10.10.0"
@@ -351,7 +363,7 @@ download-image() {
 
   if ! [ -a $IMAGE.$IMGTYPE ]; then
     curl $IMAGEURL/$IMAGE.$IMGTYPE$ARCHIVE -O
-    shasum -a 256 -c <(curl -s $IMAGEURL/$SHA256FILE | grep "$IMAGE.$IMGTYPE$ARCHIVE")
+    shasum -a 256 -c <(curl -s -L $IMAGEURL/$SHA256FILE | grep "$IMAGE.$IMGTYPE$ARCHIVE")
 
     if [ "$ARCHIVE" = ".tar.gz" ]; then
       tar xzf $IMAGE.$IMGTYPE$ARCHIVE
